@@ -894,6 +894,8 @@ code = setup(name = 'sage',
                      'sage.crypto.public_key',
                      
                      'sage.databases',
+
+                     'sage.doctest',
                      
                      'sage.ext',
                      'sage.ext.interpreters',
