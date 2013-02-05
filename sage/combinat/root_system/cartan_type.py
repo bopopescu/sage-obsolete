@@ -84,7 +84,7 @@ Non-crystallographic Cartan types are also partially supported::
     [['I', 5], ['H', 3], ['H', 4]]
 
 In Sage, a Cartan type is used as a database of type-specific
-information and algorithms (see e.g. :mod:`sage.combinat.root_system.type_A`). 
+information and algorithms (see e.g. :mod:`sage.combinat.root_system.type_A`).
 This database includes how to construct the Dynkin diagram, the ambient space for the root
 system (see http://en.wikipedia.org/wiki/Root_system), and further
 mathematical properties::
@@ -96,7 +96,7 @@ It will eventually include Coxeter numbers, etc.
 
 In particular, a Sage Cartan type is endowed with a fixed choice of
 labels for the nodes of the Dynkin diagram. This choice follows the
-conventions of Nicolas Bourbaki, Lie Groups and Lie Algebras: Chapter 4-6, Elements of Mathematics, 
+conventions of Nicolas Bourbaki, Lie Groups and Lie Algebras: Chapter 4-6, Elements of Mathematics,
 Springer (2002). ISBN 978-3540426509. For example::
 
     sage: T = CartanType(['D', 4])
@@ -320,8 +320,8 @@ automatically translated into the previous ones::
     F4~*
 """
 #*****************************************************************************
-#       Copyright (C) 2007 Mike Hansen <mhansen@gmail.com>, 
-#       Copyright (C) 2008-2009 Nicolas M. Thiery <nthiery at users.sf.net>, 
+#       Copyright (C) 2007 Mike Hansen <mhansen@gmail.com>,
+#       Copyright (C) 2008-2009 Nicolas M. Thiery <nthiery at users.sf.net>,
 #
 #  Distributed under the terms of the GNU General Public License (GPL)
 #                  http://www.gnu.org/licenses/
@@ -355,17 +355,17 @@ class CartanTypeFactory(SageObject):
     def __call__(self, *args):
         """
         Constructs a Cartan type object.
-        
+
         INPUT:
          - ``[letter, rank]``: letter is one of 'A','B','C','D','E','F','G' and rank is an integer
          - ``[letter, rank, twist]``: letter is one of 'A','B','C','D','E','F','G', 'BC', and rank and twist are integers
          - ``str``: a string
          - ``object``: a cartan type, or an object with a cartan type method
-        
+
         EXAMPLES:
 
         We construct the Cartan type `D_4`::
-        
+
             sage: d4 = CartanType(['D',4])
             sage: d4
             ['D', 4]
@@ -395,7 +395,7 @@ class CartanTypeFactory(SageObject):
                 return CartanType([t[0], eval(t[1:])])
 
         t = list(t)
-            
+
         if type(t[0]) == str and t[1] in ZZ and t[1] >= 0:
             letter, n = t[0], t[1]
             if len(t) == 2:
@@ -735,11 +735,6 @@ class CartanType_abstract(object):
             [(1, 2, 6)]
             sage: CartanType(['F',4]).coxeter_diagram().edges()
             [(1, 2, 3), (2, 3, 4), (3, 4, 3)]
-
-        This is currently implemented only for crystallographic types::
-
-            sage: CartanType(['H',3]).coxeter_diagram
-            NotImplemented
         """
 
     @cached_method
@@ -976,16 +971,10 @@ class CartanType_abstract(object):
             sage: CartanType(["A",4,1]).is_implemented()
             True
             sage: CartanType(['H',3]).is_implemented()
-            False
-
-        .. todo::
-
-            Implemente Cartan datum for non crystallographic types,
-            and update the implementation of this method accordingly,
-            say by testing the coxeter diagram instead.
+            True
         """
         try:
-            self.dynkin_diagram()
+            self.coxeter_diagram()
             return True
         except StandardError:
             return False

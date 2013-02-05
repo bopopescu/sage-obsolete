@@ -2,7 +2,7 @@
 Root system data for type I
 """
 #*****************************************************************************
-#       Copyright (C) 2008-2009 Nicolas M. Thiery <nthiery at users.sf.net>, 
+#       Copyright (C) 2008-2009 Nicolas M. Thiery <nthiery at users.sf.net>,
 #
 #  Distributed under the terms of the GNU General Public License (GPL)
 #                  http://www.gnu.org/licenses/
@@ -13,7 +13,7 @@ class CartanType(CartanType_standard_finite, CartanType_simple):
     def __init__(self, n):
         """
         EXAMPLES::
-        
+
             sage: ct = CartanType(['I',5])
             sage: ct
             ['I', 5]
@@ -62,3 +62,21 @@ class CartanType(CartanType_standard_finite, CartanType_simple):
             [1, 2]
         """
         return [1, 2]
+
+    def coxeter_diagram(self):
+        """
+        Returns the Coxeter matrix for this type.
+
+        EXAMPLES::
+
+            sage: ct = CartanType(['I', 4])
+            sage: ct.coxeter_diagram()
+            Graph on 2 vertices
+            sage: ct.coxeter_diagram().edges()
+            [(1, 2, 4)]
+            sage: ct.coxeter_matrix()
+            [1 4]
+            [4 1]
+        """
+        from sage.graphs.graph import Graph
+        return Graph([[1,2,self.n]], multiedges=False)
