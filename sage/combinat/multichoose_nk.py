@@ -2,7 +2,7 @@
 Low-level multichoose
 """
 #*****************************************************************************
-#       Copyright (C) 2007 Mike Hansen <mhansen@gmail.com>, 
+#       Copyright (C) 2007 Mike Hansen <mhansen@gmail.com>,
 #
 #  Distributed under the terms of the GNU General Public License (GPL)
 #
@@ -23,7 +23,7 @@ class MultichooseNK(CombinatorialClass):
     def __init__(self, n, k):
         """
         TESTS::
-        
+
             sage: a = MultichooseNK(3,2)
             sage: a == loads(dumps(a))
             True
