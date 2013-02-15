@@ -189,13 +189,12 @@ class SL2Z_class(Gamma0_class):
             [ 1 -4]
 
         Passes extra positional or keyword arguments through::
-            
-            sage: SL2Z.random_element(5, distribution='1/n')
-            [ 1 -1]
-            [ 0  1]
 
+            sage: SL2Z.random_element(5, distribution='1/n')
+            [ 1 -4]
+            [ 0  1]
         """
-        if bound <= 1: raise ValueError, "bound must be greater than 1"
+        if bound <= 1: raise ValueError("bound must be greater than 1")
         c = ZZ.random_element(1-bound, bound, *args, **kwds)
         d = ZZ.random_element(1-bound, bound, *args, **kwds)
         if gcd(c,d) != 1: # try again
@@ -217,9 +216,9 @@ class SL2Z_class(Gamma0_class):
             elif d < 0:
                 whi = min(whi, ((bound + b)/ZZ(-d)).ceil())
                 wlo = min(wlo, ((bound - b)/ZZ(-d)).ceil())
-                
+
             w = ZZ.random_element(1-wlo, whi, *args, **kwds)
-            a += c*w 
+            a += c*w
             b += d*w
             return self([a,b,c,d])
 
