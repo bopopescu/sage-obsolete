@@ -65,7 +65,7 @@ Finite words in a specific combinatorial class::
 
     sage: W = Words("ab")
     sage: W
-    Words over Ordered Alphabet ['a', 'b']
+    Words over {'a', 'b'}
     sage: W("abbabaab")
     word: abbabaab
     sage: W(["a","b","b","a","b","a","a","b"])
@@ -131,7 +131,7 @@ As matrix and many other sage objects, words have a parent::
 
     sage: v = Word('xyxxyxyyy', alphabet='xy')
     sage: v.parent()
-    Words over Ordered Alphabet ['x', 'y']
+    Words over {'x', 'y'}
 
 ========================
 Factors and Rauzy Graphs
@@ -496,7 +496,7 @@ exponent %s: the length of the word (%s) times the exponent \
         if self._len is None:
             self._len = Integer(sum(1 for _ in self))
         return self._len
-    
+
     def schuetzenberger_involution(self, n = None):
         """
         Returns the Schuetzenberger involution of the word self, which is obtained
@@ -504,43 +504,43 @@ exponent %s: the length of the word (%s) times the exponent \
         underlying ordered alphabet. If `n` is specified, the underlying
         alphabet is assumed to be `[1,2,\ldots,n]`. If no alphabet is specified,
         `n` is the maximal letter appearing in self.
-        
-        INPUT:
-        
+
+       INPUT:
+
         - ``self`` -- a word
         - ``n``    -- an integer specifying the maximal letter in the alphabet (optional)
 
         OUTPUT:
-        
+
         - a word, the Schuetzenberger involution of self
-        
+
         EXAMPLES::
-        
+
             sage: w = Word([9,7,4,1,6,2,3])
             sage: v = w.schuetzenberger_involution(); v
             word: 7849631
             sage: v.parent()
             Words
-        
+
             sage: w = Word([1,2,3],alphabet=[1,2,3,4,5])
             sage: v = w.schuetzenberger_involution();v
             word: 345
             sage: v.parent()
-            Words over Ordered Alphabet [1, 2, 3, 4, 5]
+            Words over {1, 2, 3, 4, 5}
 
             sage: w = Word([1,2,3])
             sage: v = w.schuetzenberger_involution(n=5);v
             word: 345
             sage: v.parent()
             Words
-        
+
             sage: w = Word([11,32,69,2,53,1,2,3,18,41])
             sage: w.schuetzenberger_involution()
             word: 29,52,67,68,69,17,68,1,38,59
 
             sage: w = Word([],alphabet=[1,2,3,4,5])
             sage: w.schuetzenberger_involution()
-            word: 
+            word:
 
             sage: w = Word([])
             sage: w.schuetzenberger_involution()
@@ -559,7 +559,7 @@ exponent %s: the length of the word (%s) times the exponent \
         for k in range(r.length()):
             w[k] = n+1 - w[k]
         return self.parent()(w)
-        
+
     def is_empty(self):
         r"""
         Returns True if the length of self is zero, and False otherwise.
@@ -1560,8 +1560,8 @@ exponent %s: the length of the word (%s) times the exponent \
 
         INPUT:
 
-        -  ``n`` - integer (optional, default: None). If None, it returns
-           all left special factors.
+        -  ``n`` - integer (optional, default: ``None``). If ``None``, it
+           returns all left special factors.
 
         OUTPUT:
 
@@ -1571,12 +1571,12 @@ exponent %s: the length of the word (%s) times the exponent \
 
             sage: alpha, beta, x = 0.54, 0.294, 0.1415
             sage: w = words.CodingOfRotationWord(alpha, beta, x)[:40]
-            sage: for i in range(5): print i, sorted(w.right_special_factors(i))
+            sage: for i in range(5): print i, sorted(w.left_special_factors(i))
             0 [word: ]
             1 [word: 0]
-            2 [word: 00, word: 10]
+            2 [word: 00, word: 01]
             3 [word: 000, word: 010]
-            4 [word: 0000, word: 1010]
+            4 [word: 0000, word: 0101]
         """
         return list(self.left_special_factors_iterator(n))
 
@@ -2099,19 +2099,20 @@ exponent %s: the length of the word (%s) times the exponent \
         r"""
         Returns True if self is a palindrome (or a `f`-palindrome), and
         False otherwise.
-        
-        Let `f : \Sigma \rightarrow \Sigma` be an involution that extends 
+
+        Let `f : \Sigma \rightarrow \Sigma` be an involution that extends
         to a morphism on `\Sigma^*`. We say that `w\in\Sigma^*` is a
-        *`f`-palindrome* if `w=f(\tilde{w})` [1]. Also called 
+        *`f`-palindrome* if `w=f(\tilde{w})` [1]. Also called
         *`f`-pseudo-palindrome* [2].
-        
+
         INPUT:
 
-        -  ``f`` - involution (default: None) on the alphabet of self. It must 
-           be callable on letters as well as words (e.g. WordMorphism). The 
-           default value corresponds to usual palindromes, i.e., `f` equal to 
+        -  ``f`` - involution (default: ``None``) on the alphabet of self. It
+           must be callable on letters as well as words (e.g.
+           :class:`~sage.combinat.words.morphism.WordMorphism`). The
+           default value corresponds to usual palindromes, i.e., `f` equal to
            the identity.
-            
+
         EXAMPLES::
 
             sage: Word('esope reste ici et se repose').is_palindrome()
@@ -2132,13 +2133,13 @@ exponent %s: the length of the word (%s) times the exponent \
             True
 
         ::
-        
+
             sage: f = WordMorphism('a->b,b->a,c->c')
             sage: Word('abacbacbab').is_palindrome(f)
             True
 
         ::
-            
+
             sage: f = WordMorphism({'a':'b','b':'a'})
             sage: Word('aababb').is_palindrome(f)
             True
@@ -2158,7 +2159,7 @@ exponent %s: the length of the word (%s) times the exponent \
             Traceback (most recent call last):
             ...
             KeyError: 'b'
-            
+
         TESTS:
 
         If the given involution is not an involution::
@@ -2167,8 +2168,8 @@ exponent %s: the length of the word (%s) times the exponent \
             sage: Word('abab').is_palindrome(f)
             Traceback (most recent call last):
             ...
-            ValueError: f must be an involution
-            
+            TypeError: self (=a->b, b->b) is not an endomorphism
+
         ::
 
             sage: Y = Word
@@ -2180,7 +2181,7 @@ exponent %s: the length of the word (%s) times the exponent \
             False
             sage: Y('aba').is_palindrome()
             True
-            sage: Y('aa').is_palindrome() 
+            sage: Y('aa').is_palindrome()
             True
             sage: E = WordMorphism('a->b,b->a')
             sage: Y().is_palindrome(E)
@@ -2195,11 +2196,11 @@ exponent %s: the length of the word (%s) times the exponent \
             False
             sage: Y('abab').is_palindrome(E)
             True
-        
+
         REFERENCES:
 
-        -   [1] S. Labbé, Propriétés combinatoires des `f`-palindromes,  
-            Mémoire de maîtrise en Mathématiques, Montréal, UQAM, 2008, 
+        -   [1] S. Labbé, Propriétés combinatoires des `f`-palindromes,
+            Mémoire de maîtrise en Mathématiques, Montréal, UQAM, 2008,
             109 pages.
         -   [2] V. Anne, L.Q. Zamboni, I. Zorca, Palindromes and Pseudo-
             Palindromes in Episturmian and Pseudo-Palindromic Infinite Words,
@@ -2209,14 +2210,14 @@ exponent %s: the length of the word (%s) times the exponent \
         l = self.length()
         if f is None:
             return self[:l/2] == self[l/2 + l%2:].reversal()
-        else:    
+        else:
             from sage.combinat.words.morphism import WordMorphism
             if not isinstance(f, WordMorphism):
                 f = WordMorphism(f)
             if not f.is_involution():
                 raise ValueError, "f must be an involution"
-            return self[:l/2 + l%2] == f(self[l/2:].reversal()) 
-            
+            return self[:l/2 + l%2] == f(self[l/2:].reversal())
+
     ###########################################################################
     ##### DEPRECATION WARNINGS ################################################
     ##### Added July 2009 #####################################################
@@ -2862,23 +2863,24 @@ exponent %s: the length of the word (%s) times the exponent \
 
     def palindromic_closure(self, side='right', f=None):
         r"""
-        Returns the shortest palindrome having self as a prefix 
-        (or as a suffix if side=='left').
+        Return the shortest palindrome having ``self`` as a prefix 
+        (or as a suffix if ``side`` is ``'left'``).
         
         See [1].
 
         INPUT:
 
-        -  ``side`` - 'right' or 'left' (default: 'right') the direction of the 
-           closure
-        -  ``f`` - involution (default: None) on the alphabet of self. It must 
-           be callable on letters as well as words (e.g. WordMorphism).
+        -  ``side`` -- ``'right'`` or ``'left'`` (default: ``'right'``) the
+           direction of the  closure
+
+        -  ``f`` -- involution (default: ``None``) on the alphabet of ``self``.
+           It must be callable on letters as well as words (e.g. WordMorphism).
                              
         OUTPUT:
 
-            word -- If f is None, the right palindromic closure of self;
-                    otherwise, the right f-palindromic closure of self.
-                    If side is 'left', the left palindromic closure.
+        word -- If f is ``None``, the right palindromic closure of ``self``;
+                otherwise, the right ``f``-palindromic closure of ``self``.
+                If side is ``'left'``, the left palindromic closure.
                     
         EXAMPLES::
 
@@ -2926,12 +2928,12 @@ exponent %s: the length of the word (%s) times the exponent \
                 l = self.reversal().lps().length()
                 return self[:l-1:-1] * self
             else:
-                raise ValueError, "side must be either 'left' or 'right' (not %s) " % side
+                raise ValueError("side must be either 'left' or 'right' (not %s) " % side)
         else:
             from sage.combinat.words.morphism import WordMorphism
             f = WordMorphism(f)
             if not f.is_involution():
-                raise ValueError, "f must be an involution"
+                raise ValueError("f must be an involution")
             if side == 'right':
                 l = self.lps(f=f).length()
                 return self * f(self[-(l+1)::-1])
@@ -2939,7 +2941,7 @@ exponent %s: the length of the word (%s) times the exponent \
                 l = self.reversal().lps(f=f).length()
                 return f(self[:l-1:-1]) * self
             else:
-                raise ValueError, "side must be either 'left' or 'right' (not %s) " % side
+                raise ValueError("side must be either 'left' or 'right' (not %s) " % side)
 
     def is_symmetric(self, f=None):
         r"""
@@ -4362,22 +4364,22 @@ exponent %s: the length of the word (%s) times the exponent \
         self and other with the given delay.
 
         The partition of the alphabet is given by the equivalence
-        relation obtained from the symmetric, reflexive and transitive 
+        relation obtained from the symmetric, reflexive and transitive
         closure of the set of pairs of letters
         `R_{u,v,d} = \{ (u_k, v_{k-d}) : 0 \leq k < n, 0\leq k-d < m \}`
-        where `u = u_0 u_1 \cdots u_{n-1}`, `v = v_0v_1\cdots v_{m-1}` are 
-        two words on the alphabet `A` and `d` is an integer. 
-        
+        where `u = u_0 u_1 \cdots u_{n-1}`, `v = v_0v_1\cdots v_{m-1}` are
+        two words on the alphabet `A` and `d` is an integer.
+
         The equivalence relation defined by `R` is inspired from [1].
 
         INPUT:
 
         -  ``other`` - word on the same alphabet as self
         -  ``delay`` - integer
-        -  ``p`` - disjoint sets data structure (optional, default: None), 
-           a partition of the alphabet into disjoint sets to start with. 
+        -  ``p`` - disjoint sets data structure (optional, default: None),
+           a partition of the alphabet into disjoint sets to start with.
            If None, each letter start in distinct equivalence classes.
-        -  ``involution`` - callable (optional, default: None), an 
+        -  ``involution`` - callable (optional, default: None), an
            involution on the alphabet. If involution is not None, the relation
            `R_{u,v,d} \cup R_{involution(u),involution(v),d}` is considered.
 
@@ -4430,7 +4432,7 @@ exponent %s: the length of the word (%s) times the exponent \
             sage: w2 = m(w); w2
             word: 01234567876543210
             sage: w2.parent()
-            Words over Ordered Alphabet [0, 1, 2, 3, 4, 5, 6, 7, 8, 17, 18, 19]
+            Words over {0, 1, 2, 3, 4, 5, 6, 7, 8, 17, 18, 19}
             sage: w2.is_palindrome()
             True
 
@@ -4447,7 +4449,7 @@ exponent %s: the length of the word (%s) times the exponent \
             sage: w2.is_symmetric()
             True
 
-        If the image of the reversal of a word `w` under an involution `f` 
+        If the image of the reversal of a word `w` under an involution `f`
         is factor of its square `w^2`, then `w` is `f`-symmetric::
 
             sage: W = Words([-11,-9,..,11])
@@ -4468,7 +4470,7 @@ exponent %s: the length of the word (%s) times the exponent \
             sage: W = Words('abcdef')
             sage: w = W('abc')
             sage: y = W('def')
-            sage: w.overlap_partition(y, -3) 
+            sage: w.overlap_partition(y, -3)
             {{'a'}, {'b'}, {'c'}, {'d'}, {'e'}, {'f'}}
             sage: w.overlap_partition(y, -2)
             {{'a', 'f'}, {'b'}, {'c'}, {'d'}, {'e'}}
@@ -4498,7 +4500,7 @@ exponent %s: the length of the word (%s) times the exponent \
         ::
 
             sage: empty = Word()
-            sage: empty.overlap_partition(empty, 'yo')  
+            sage: empty.overlap_partition(empty, 'yo')
             Traceback (most recent call last):
             ...
             TypeError: delay (=yo) must be an integer
@@ -4516,8 +4518,8 @@ exponent %s: the length of the word (%s) times the exponent \
 
         REFERENCES:
 
-        -   [1] S. Labbé, Propriétés combinatoires des `f`-palindromes,  
-            Mémoire de maîtrise en Mathématiques, Montréal, UQAM, 2008, 
+        -   [1] S. Labbé, Propriétés combinatoires des `f`-palindromes,
+            Mémoire de maîtrise en Mathématiques, Montréal, UQAM, 2008,
             109 pages.
         """
         if not isinstance(delay, (int, Integer)):
@@ -4645,7 +4647,7 @@ exponent %s: the length of the word (%s) times the exponent \
             word:
             sage: w = Words(3)([2,1,2])
             sage: w._s(1).parent()
-            Words over Ordered Alphabet [1, 2, 3]
+            Words over {1, 2, 3}
         """
         unpaired_i  = [] # positions of unpaired is 
         unpaired_ip = [] # positions of unpaired i+1s
@@ -4885,21 +4887,22 @@ exponent %s: the length of the word (%s) times the exponent \
     ###########################################################################
     def iterated_palindromic_closure(self, side='right', f=None):
         r"""
-        Returns the iterated (`f`-)palindromic closure of self.
-                            
+        Returns the iterated (`f`-)palindromic closure of ``self``.
+
         INPUT:
 
-        -  ``side`` - 'right' or 'left' (default: 'right') the direction of the 
-           closure
-        -  ``f`` - involution (default: None) on the alphabet of self. It must 
-           be callable on letters as well as words (e.g. WordMorphism).
-                             
+        -  ``side`` -- ``'right'`` or ``'left'`` (default: ``'right'``) the
+           direction of the closure
+
+        -  ``f`` -- involution (default: ``None``) on the alphabet of ``self``.
+           It must be callable on letters as well as words (e.g. WordMorphism).
+
         OUTPUT:
 
-            word -- If f is None, the right iterated palindromic closure of
-            self; otherwise, the right iterated f-palindromic closure
-            of self.  If side is 'left', the left palindromic closure.
-                    
+        word -- If `f` is ``None``, the right iterated palindromic closure of
+        ``self``; otherwise, the right iterated `f`-palindromic closure
+        of ``self``.  If side is ``'left'``, the left palindromic closure.
+
         EXAMPLES::
 
             sage: Word('123').iterated_palindromic_closure()
@@ -4911,36 +4914,36 @@ exponent %s: the length of the word (%s) times the exponent \
             sage: Word('1').iterated_palindromic_closure()
             word: 1
             sage: Word().iterated_palindromic_closure()
-            word: 
+            word:
             sage: Word = Words('ab')
             sage: f = WordMorphism('a->b,b->a')
-            sage: Word('ab').iterated_palindromic_closure(f=f)            
+            sage: Word('ab').iterated_palindromic_closure(f=f)
             word: abbaab
             sage: Word('ab').iterated_palindromic_closure(f=f, side='left')
             word: abbaab
-            sage: Word('aab').iterated_palindromic_closure(f=f)            
+            sage: Word('aab').iterated_palindromic_closure(f=f)
             word: ababbaabab
             sage: Word('aab').iterated_palindromic_closure(f=f, side='left')
             word: abbaabbaab
-            
+
         TESTS::
 
             sage: Word('aab').iterated_palindromic_closure(f=f, side='leftt')
             Traceback (most recent call last):
             ...
-            ValueError: side must be either 'left' or 'right' (not leftt) 
+            ValueError: side must be either 'left' or 'right' (not leftt)
 
         If f is not an involution:
             sage: f = WordMorphism('a->b,b->b')
-            sage: Word('aab').iterated_palindromic_closure(f=f, side='left') 
+            sage: Word('aab').iterated_palindromic_closure(f=f, side='left')
             Traceback (most recent call last):
             ...
-            ValueError: f must be an involution
-            
+            TypeError: self (=a->b, b->b) is not an endomorphism
+
         REFERENCES:
 
         -   A. de Luca, A. De Luca, Pseudopalindrome closure operators
-            in free monoids, Theoret. Comput. Sci. 362 (2006) 282--300.      
+            in free monoids, Theoret. Comput. Sci. 362 (2006) 282--300.
         """
         from sage.misc.superseded import deprecation
         deprecation(8429, "iterated_palindromic_closure is deprecated, "
@@ -4957,16 +4960,16 @@ exponent %s: the length of the word (%s) times the exponent \
     def iterated_left_palindromic_closure(self, f=None):
         r"""
         Returns the iterated left (`f`-)palindromic closure of self.
-                            
+
         INPUT:
 
-        -  ``f`` - involution (default: None) on the alphabet of self. It must 
-           be callable on letters as well as words (e.g. WordMorphism).
-                             
+        -  ``f`` -- involution (default: ``None``) on the alphabet of ``self``.
+           It must be callable on letters as well as words (e.g. WordMorphism).
+
         OUTPUT:
 
-            word -- the left iterated f-palindromic closure of self.
-                    
+        word -- the left iterated `f`-palindromic closure of ``self``.
+
         EXAMPLES::
 
             sage: Word('123').iterated_left_palindromic_closure()
@@ -4976,21 +4979,21 @@ exponent %s: the length of the word (%s) times the exponent \
             word: abbaab
             sage: Word('aab').iterated_left_palindromic_closure(f=f)
             word: abbaabbaab
-            
+
         TESTS:
 
-        If f is not a involution::
+        If ``f`` is not a involution::
 
             sage: f = WordMorphism('a->b,b->b')
-            sage: Word('aab').iterated_left_palindromic_closure(f=f) 
+            sage: Word('aab').iterated_left_palindromic_closure(f=f)
             Traceback (most recent call last):
             ...
-            ValueError: f must be an involution
-            
+            TypeError: self (=a->b, b->b) is not an endomorphism
+
         REFERENCES:
 
         -   A. de Luca, A. De Luca, Pseudopalindrome closure operators
-            in free monoids, Theoret. Comput. Sci. 362 (2006) 282--300.      
+            in free monoids, Theoret. Comput. Sci. 362 (2006) 282--300.
         """
         if f is None:
             return self.reversal().iterated_right_palindromic_closure(f=f)
