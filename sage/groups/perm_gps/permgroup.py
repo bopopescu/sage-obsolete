@@ -1,5 +1,4 @@
-# -*- coding = utf-8 -*-
-
+# -*- coding: utf-8 -*-
 r"""
 Permutation groups
 
@@ -1643,23 +1642,20 @@ class PermutationGroup_generic(group.Group):
 
     def conjugacy_class(self, g):
         r"""
-        Returns the conjugacy class of 'g' inside the group 'self'
-        
+        Return the conjugacy class of ``g`` inside the group ``self``.
+
         INPUT:
-        
-        - ``g`` - an element of the permutation group ``self``
-        
+
+        - ``g`` -- an element of the permutation group ``self``
+
         OUTPUT:
-        
+
         The conjugacy class of ``g`` in the group ``self``. If ``self`` is
         the group denoted by `G`, this method computes the set
-        
-        .. math::
-            
-            \{x^{-1}gx\ \vert\ x\in G \}
-            
+        `\{x^{-1}gx\ \vert\ x \in G \}`
+
         EXAMPLES::
-        
+
             sage: G = SymmetricGroup(4)
             sage: g = G((1,2,3,4))
             sage: G.conjugacy_class(g)
@@ -1669,10 +1665,10 @@ class PermutationGroup_generic(group.Group):
     
     def conjugacy_classes(self):
         r"""
-        Returns a list with all the conjugacy classes of ``self``.
-        
+        Return a list with all the conjugacy classes of ``self``.
+
         EXAMPLES::
-        
+
             sage: G = DihedralGroup(3)
             sage: G.conjugacy_classes()
             [Conjugacy class of () in Dihedral group of order 6 as a permutation group, 
