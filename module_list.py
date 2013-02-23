@@ -269,7 +269,7 @@ ext_modules = [
               sources = ['sage/crypto/boolean_function.pyx']),
 
     ################################
-    ## 
+    ##
     ## sage.ext
     ##
     ################################
@@ -289,10 +289,13 @@ ext_modules = [
     Extension('sage.ext.multi_modular',
               sources = ['sage/ext/multi_modular.pyx'],
               extra_compile_args = ['-std=c99'],
-              libraries=['gmp']), 
+              libraries=['gmp']),
+
+    Extension('sage.ext.pselect',
+              sources = ['sage/ext/pselect.pyx']),
 
     ################################
-    ## 
+    ##
     ## sage.finance
     ##
     ################################
