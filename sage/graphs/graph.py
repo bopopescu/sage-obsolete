@@ -5399,7 +5399,7 @@ class Graph(GenericGraph):
         Returns the modular decomposition of the current graph.
 
         Crash course on modular decomposition:
-        
+
         A module `M` of a graph `G` is a proper subset of its vertices
         such that for all `u \in V(G)-M, v,w\in M` the relation `u
         \sim v \Leftrightarrow u \sim w` holds, where `\sim` denotes
@@ -5443,36 +5443,36 @@ class Graph(GenericGraph):
         You may also be interested in the survey from Michel Habib and
         Christophe Paul entitled "A survey on Algorithmic aspects of
         modular decomposition" [HabPau10]_.
-    
+
         OUTPUT:
-    
+
         A pair of two values (recursively encoding the decomposition) :
-        
+
             * The type of the current module :
-    
+
                 * ``"Parallel"``
                 * ``"Prime"``
                 * ``"Serie"``
-    
+
             * The list of submodules (as list of pairs ``(type, list)``,
               recursively...) or the vertex's name if the module is a
               singleton.
-    
+
         EXAMPLES:
-    
+
         The Bull Graph is prime::
-    
+
             sage: graphs.BullGraph().modular_decomposition()
             ('Prime', [3, 4, 0, 1, 2])
-    
+
         The Petersen Graph too::
-    
+
             sage: graphs.PetersenGraph().modular_decomposition()
             ('Prime', [2, 6, 3, 9, 7, 8, 0, 1, 5, 4])
-    
+
         This a clique on 5 vertices with 2 pendant edges, though, has a more
         interesting decomposition ::
-    
+
             sage: g = graphs.CompleteGraph(5)
             sage: g.add_edge(0,5)
             sage: g.add_edge(0,6)
@@ -5481,7 +5481,7 @@ class Graph(GenericGraph):
 
         ALGORITHM:
 
-        This function uses a C implementation of a 2-step algorithm 
+        This function uses a C implementation of a 2-step algorithm
         implemented by Fabien de Montgolfier [FMDec]_ :
 
             * Computation of a factorizing permutation [HabibViennot1999]_.
@@ -5512,6 +5512,8 @@ class Graph(GenericGraph):
           vol 4, number 1, pages 41--59, 2010
           http://www.lirmm.fr/~paul/md-survey.pdf
         """
+        from sage.misc.stopgap import stopgap
+        stopgap("Graph.modular_decomposition is known to return wrong results",13744)
 
         from sage.graphs.modular_decomposition.modular_decomposition import modular_decomposition
 
