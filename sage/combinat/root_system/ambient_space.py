@@ -3,7 +3,7 @@ Ambient lattices and ambient spaces
 """
 #*****************************************************************************
 #       Copyright (C) 2008-2009 Daniel Bump
-#       Copyright (C) 2008-2009 Nicolas M. Thiery <nthiery at users.sf.net>, 
+#       Copyright (C) 2008-2013 Nicolas M. Thiery <nthiery at users.sf.net>
 #
 #  Distributed under the terms of the GNU General Public License (GPL)
 #                  http://www.gnu.org/licenses/
@@ -18,15 +18,17 @@ class AmbientSpace(ClearCacheOnPickle, CombinatorialFreeModule):
     r"""
     Abstract class for ambient spaces
 
-    Any implementation of this class should implement a class method
-    smallest_base_ring as described below, and a method dimension
-    working on a partially initialized instance with just root_system
-    as attribute. There is no safe default implementation for the later,
-    so none is provided.
+    All subclasses should implement a class method
+    ``smallest_base_ring`` taking a cartan type as input, and a method
+    ``dimension`` working on a partially initialized instance with
+    just ``root_system`` as attribute. There is no safe default
+    implementation for the later, so none is provided.
 
     EXAMPLES::
 
         sage: AL = RootSystem(['A',2]).ambient_lattice()
+
+    .. NOTE:: This is only used so far for finite root systems.
 
     Caveat: Most of the ambient spaces currently have a basis indexed
     by `0,\dots, n`, unlike the usual mathematical convention::
@@ -37,21 +39,36 @@ class AmbientSpace(ClearCacheOnPickle, CombinatorialFreeModule):
 
     This will be cleaned up!
 
+    .. SEEALSO::
+
+        - :class:`sage.combinat.root_system.type_A.AmbientSpace`
+        - :class:`sage.combinat.root_system.type_B.AmbientSpace`
+        - :class:`sage.combinat.root_system.type_C.AmbientSpace`
+        - :class:`sage.combinat.root_system.type_D.AmbientSpace`
+        - :class:`sage.combinat.root_system.type_E.AmbientSpace`
+        - :class:`sage.combinat.root_system.type_F.AmbientSpace`
+        - :class:`sage.combinat.root_system.type_G.AmbientSpace`
+        - :class:`sage.combinat.root_system.type_dual.AmbientSpace`
+        - :class:`sage.combinat.root_system.type_affine.AmbientSpace`
+
     TESTS::
 
-        sage: types = CartanType.samples(finite=True, crystalographic = True)+[CartanType(["A",2],["C",5])]
+        sage: types = CartanType.samples(crystalographic = True)+[CartanType(["A",2],["C",5])]
         sage: for e in [ct.root_system().ambient_space() for ct in types]:
-        ...       if e is not None:
         ...            TestSuite(e).run()
-
     """
     def __init__(self, root_system, base_ring):
         """
         EXAMPLES::
-        
+
             sage: e = RootSystem(['A',3]).ambient_lattice()
             sage: s = e.simple_reflections()
 
+            sage: L = RootSystem(['A',3]).coroot_lattice()
+            sage: e.has_coerce_map_from(L)
+            True
+            sage: e(L.simple_root(1))
+            (1, -1, 0, 0)
         """
         self.root_system = root_system
         CombinatorialFreeModule.__init__(self, base_ring,
@@ -59,6 +76,8 @@ class AmbientSpace(ClearCacheOnPickle, CombinatorialFreeModule):
                                          element_class = AmbientSpaceElement,
                                          prefix='e',
                                          category = WeightLatticeRealizations(base_ring))
+        coroot_lattice = self.root_system.coroot_lattice()
+        coroot_lattice.module_morphism(self.simple_coroot, codomain=self).register_as_coercion()
 
         # FIXME: here for backward compatibility;
         # Should we use dimension everywhere?
@@ -94,7 +113,7 @@ class AmbientSpace(ClearCacheOnPickle, CombinatorialFreeModule):
         Returns the dimension of this ambient space.
 
         EXAMPLES::
-        
+
             sage: from sage.combinat.root_system.ambient_space import AmbientSpace
             sage: e = RootSystem(['F',4]).ambient_space()
             sage: AmbientSpace.dimension(e)
@@ -104,14 +123,18 @@ class AmbientSpace(ClearCacheOnPickle, CombinatorialFreeModule):
 
         """
         raise NotImplementedError
-    
+
     @classmethod
-    def smallest_base_ring(cls):
+    def smallest_base_ring(cls, cartan_type=None):
         """
         Returns the smallest ground ring over which the ambient space can be realized.
 
+        This class method will get called with the cartan type as
+        input. This default implementation returns `\QQ`; subclasses
+        should override it as appropriate.
+
         EXAMPLES::
-        
+
             sage: e = RootSystem(['F',4]).ambient_space()
             sage: e.smallest_base_ring()
             Rational Field
@@ -129,11 +152,11 @@ class AmbientSpace(ClearCacheOnPickle, CombinatorialFreeModule):
 
         """
         return self._name_string()
-    
+
     def _name_string(self, capitalize=True, base_ring=False, type=True):
         """
         EXAMPLES::
-        
+
             sage: RootSystem(['A',4]).ambient_lattice()._name_string()
             "Ambient lattice of the Root system of type ['A', 4]"
 
@@ -143,7 +166,7 @@ class AmbientSpace(ClearCacheOnPickle, CombinatorialFreeModule):
     def __call__(self, v):
         """
         TESTS::
-        
+
             sage: R = RootSystem(['A',4]).ambient_lattice()
             sage: R([1,2,3,4,5])
             (1, 2, 3, 4, 5)
@@ -161,9 +184,9 @@ class AmbientSpace(ClearCacheOnPickle, CombinatorialFreeModule):
     def __getitem__(self,i):
         """
         Note that indexing starts at 1.
-        
+
         EXAMPLES::
-        
+
             sage: e = RootSystem(['A',2]).ambient_lattice()
             sage: e[1]
             (1, 0, 0)
@@ -179,7 +202,7 @@ class AmbientSpace(ClearCacheOnPickle, CombinatorialFreeModule):
     def coroot_lattice(self):
         """
         EXAMPLES::
-        
+
             sage: e = RootSystem(["A", 3]).ambient_lattice()
             sage: e.coroot_lattice()
             Ambient lattice of the Root system of type ['A', 3]
@@ -191,7 +214,7 @@ class AmbientSpace(ClearCacheOnPickle, CombinatorialFreeModule):
         Returns the i-th simple coroot, as an element of this space
 
         EXAMPLES::
-        
+
             sage: R = RootSystem(["A",3])
             sage: L = R.ambient_lattice()
             sage: L.simple_coroot(1)
@@ -200,13 +223,13 @@ class AmbientSpace(ClearCacheOnPickle, CombinatorialFreeModule):
             (0, 1, -1, 0)
             sage: L.simple_coroot(3)
             (0, 0, 1, -1)
-        """        
+        """
         return self.simple_root(i).associated_coroot()
 
     def reflection(self, root, coroot=None):
         """
         EXAMPLES::
-        
+
             sage: e = RootSystem(["A", 3]).ambient_lattice()
             sage: a = e.simple_root(0); a
             (-1, 0, 0, 0)
@@ -252,7 +275,7 @@ class AmbientSpace(ClearCacheOnPickle, CombinatorialFreeModule):
     def __cmp__(self, other):
         """
         EXAMPLES::
-        
+
             sage: e1 = RootSystem(['A',3]).ambient_lattice()
             sage: e2 = RootSystem(['B',3]).ambient_lattice()
             sage: e1 == e1
@@ -287,7 +310,7 @@ class AmbientSpace(ClearCacheOnPickle, CombinatorialFreeModule):
         into the subspace corresponding to the semisimple derived group.
         This arises with Cartan type A, E6 and E7.
 
-        EXAMPLES:
+        EXAMPLES::
 
             sage: RootSystem("A2").ambient_space().from_vector_notation((1,0,0))
             (1, 0, 0)
@@ -316,14 +339,14 @@ class AmbientSpaceElement(CombinatorialFreeModuleElement):
     def __hash__(self):
         """
         EXAMPLES::
-        
+
             sage: e = RootSystem(['A',2]).ambient_space()
             sage: hash(e.simple_root(0))
             -4601450286177489034          # 64-bit
-            549810038                     # 32-bit 
+            549810038                     # 32-bit
         """
         return hash(tuple(sorted([(m,c) for m,c in self._monomial_coefficients.iteritems()])))
-        
+
     # For backward compatibility
     def _repr_(self):
         """
@@ -334,14 +357,14 @@ class AmbientSpaceElement(CombinatorialFreeModuleElement):
             (-1, 0, 0)
         """
         return str(self.to_vector())
-    
+
     def inner_product(self, lambdacheck):
         """
         The scalar product with elements of the coroot lattice
         embedded in the ambient space.
 
         EXAMPLES::
-        
+
             sage: e = RootSystem(['A',2]).ambient_space()
             sage: a = e.simple_root(0); a
             (-1, 0, 0)
@@ -357,14 +380,14 @@ class AmbientSpaceElement(CombinatorialFreeModuleElement):
                 continue
             result += c*self_mc[t]
         return result
-        
+
     scalar = inner_product
     dot_product = inner_product
 
     def associated_coroot(self):
         """
         EXAMPLES::
-        
+
             sage: e = RootSystem(['F',4]).ambient_space()
             sage: a = e.simple_root(0); a
             (1/2, -1/2, -1/2, -1/2)
@@ -378,7 +401,7 @@ class AmbientSpaceElement(CombinatorialFreeModuleElement):
     def is_positive_root(self):
         """
         EXAMPLES::
-    
+
             sage: R = RootSystem(['A',3]).ambient_space()
             sage: r=R.simple_root(1)+R.simple_root(2)
             sage: r.is_positive_root()
@@ -449,8 +472,8 @@ class AmbientSpaceElement(CombinatorialFreeModuleElement):
         EXAMPLES::
 
             sage: [b.coerce_to_e6() for b in RootSystem("E8").ambient_space().basis()]
-            [(1, 0, 0, 0, 0, 0, 0, 0), (0, 1, 0, 0, 0, 0, 0, 0), (0, 0, 1, 0, 0, 0, 0, 0), 
-            (0, 0, 0, 1, 0, 0, 0, 0), (0, 0, 0, 0, 1, 0, 0, 0), (0, 0, 0, 0, 0, 1/3, 1/3, -1/3), 
+            [(1, 0, 0, 0, 0, 0, 0, 0), (0, 1, 0, 0, 0, 0, 0, 0), (0, 0, 1, 0, 0, 0, 0, 0),
+            (0, 0, 0, 1, 0, 0, 0, 0), (0, 0, 0, 0, 1, 0, 0, 0), (0, 0, 0, 0, 0, 1/3, 1/3, -1/3),
             (0, 0, 0, 0, 0, 1/3, 1/3, -1/3), (0, 0, 0, 0, 0, -1/3, -1/3, 1/3)]
         """
         x = self
