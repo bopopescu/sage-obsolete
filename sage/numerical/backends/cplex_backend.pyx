@@ -810,7 +810,7 @@ cdef class CPLEXBackend(GenericBackend):
         cdef double * c_coeff = <double *> sage_malloc(n * sizeof(double))
         cdef int * c_indices = <int *> sage_malloc(n * sizeof(int))
         cdef int * c_col = <int *> sage_malloc(n * sizeof(int))
-        
+
         for 0<= i < n:
             c_coeff[i] = coeffs[i]
             c_indices[i] = indices[i]
@@ -849,10 +849,9 @@ cdef class CPLEXBackend(GenericBackend):
             ...
             MIPSolverException: ...
         """
-    
         cdef int status
         cdef int ptype
-        cdef int solnmethod_p, solntype_p, pfeasind_p, dfeasind_p 
+        cdef int solnmethod_p, solntype_p, pfeasind_p, dfeasind_p
 
         ptype = CPXgetprobtype(self.env, self.lp)
 
@@ -868,14 +867,15 @@ cdef class CPLEXBackend(GenericBackend):
         status = CPXsolninfo(self.env, self.lp, &solnmethod_p, &solntype_p, &pfeasind_p, &dfeasind_p)
         check(status)
 
-        if not pfeasind_p:
-            raise MIPSolverException("CPLEX: The primal has no feasible solution")
-        if not dfeasind_p:
-            raise MIPSolverException("CPLEX: The problem is unbounded")
-
+        if solntype_p == CPX_NO_SOLN:
+            if not pfeasind_p:
+                raise MIPSolverException("CPLEX: The primal has no feasible solution")
+            elif not dfeasind_p:
+                raise MIPSolverException("CPLEX: The problem is unbounded")
+            else:
+                raise MIPSolverException("CPLEX: No solution has been found, but no idea why")
 
         return 0
-
 
     cpdef get_objective_value(self):
         r"""
