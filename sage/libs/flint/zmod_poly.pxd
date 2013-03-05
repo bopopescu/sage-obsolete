@@ -5,289 +5,184 @@ from sage.libs.flint.flint cimport *
 
 from flint import *
 
-cdef extern from "FLINT/zmod_poly.h":
-    ctypedef struct zmod_poly_struct:
-        unsigned long *coeffs
-        unsigned long alloc
-        unsigned long length
-        unsigned long p
-        double p_inv
+cdef extern from "flint/nmod_poly.h":
 
-    ctypedef zmod_poly_struct* zmod_poly_t
+    ctypedef unsigned long mp_bitcnt_t
+    ctypedef void * mp_srcptr
 
-    ctypedef struct zmod_poly_factor_struct:
-        zmod_poly_t *factors
-        unsigned long *exponents
-        unsigned long alloc
-        unsigned long num_factors
+    ctypedef struct nmod_t:
+        mp_limb_t n
+        mp_limb_t ninv
+        mp_bitcnt_t norm
 
-    ctypedef zmod_poly_factor_struct* zmod_poly_factor_t
+    ctypedef struct nmod_poly_struct:
+        mp_limb_t *coeffs
+        long alloc
+        long length
+        nmod_t mod
 
-    cdef void zmod_poly_init(zmod_poly_t poly, unsigned long p)
-    cdef void zmod_poly_init_precomp(zmod_poly_t poly, unsigned long p, double p_inv)
-    cdef void zmod_poly_init2(zmod_poly_t poly, unsigned long p, unsigned long alloc)
-    cdef void zmod_poly_init2_precomp(zmod_poly_t poly, unsigned long p, double p_inv, unsigned long alloc)
-    cdef void zmod_poly_clear(zmod_poly_t poly)
+    ctypedef nmod_poly_struct* nmod_poly_t
 
-    cdef void zmod_poly_realloc(zmod_poly_t poly, unsigned long alloc)
-    # _bits_ only applies to newly allocated coefficients, not existing ones...
+    ctypedef struct nmod_poly_factor_struct:
+        nmod_poly_struct *p
+        long *exp
+        long num
+        long alloc
 
-    # this non-inlined version REQUIRES that alloc > poly->alloc
-    void __zmod_poly_fit_length(zmod_poly_t poly, unsigned long alloc)
+    ctypedef nmod_poly_factor_struct* nmod_poly_factor_t
 
-    # this is arranged so that the initial comparison (very frequent) is inlined,
-    # but the actual allocation (infrequent) is not
-    cdef void zmod_poly_fit_length(zmod_poly_t poly, unsigned long alloc)
+    # Memory management
 
-    # ------------------------------------------------------
-    # Setting/retrieving coefficients
+    cdef void nmod_poly_init(nmod_poly_t poly, mp_limb_t n)
+    cdef void nmod_poly_init_preinv(nmod_poly_t poly, mp_limb_t n, mp_limb_t ninv)
+    cdef void nmod_poly_init2(nmod_poly_t poly, mp_limb_t n, long alloc)
+    cdef void nmod_poly_init2_preinv(nmod_poly_t poly, mp_limb_t n, mp_limb_t ninv, long alloc)
+    cdef void nmod_poly_realloc(nmod_poly_t poly, long alloc)
+    cdef void nmod_poly_clear(nmod_poly_t poly)
+    cdef void nmod_poly_fit_length(nmod_poly_t poly, long alloc)
+    cdef void _nmod_poly_normalise(nmod_poly_t poly)
 
-    cdef unsigned long zmod_poly_get_coeff_ui(zmod_poly_t poly, unsigned long n)
+    # Polynomial parameters
 
-    cdef unsigned long _zmod_poly_get_coeff_ui(zmod_poly_t poly, unsigned long n)
+    cdef long nmod_poly_length(nmod_poly_t poly)
+    cdef long nmod_poly_degree(nmod_poly_t poly)
+    cdef mp_limb_t nmod_poly_modulus(nmod_poly_t poly)
+    cdef mp_bitcnt_t nmod_poly_max_bits(nmod_poly_t poly)
 
-    cdef void zmod_poly_set_coeff_ui(zmod_poly_t poly, unsigned long n, unsigned long c)
+    # Assignment and basic manipulation
 
-    cdef void _zmod_poly_set_coeff_ui(zmod_poly_t poly, unsigned long n, unsigned long c)
+    cdef void nmod_poly_set(nmod_poly_t a, nmod_poly_t b)
+    cdef void nmod_poly_swap(nmod_poly_t poly1, nmod_poly_t poly2)
+    cdef void nmod_poly_zero(nmod_poly_t res)
+    cdef void nmod_poly_one(nmod_poly_t res)
+    cdef void nmod_poly_truncate(nmod_poly_t poly, long len)
+    cdef void nmod_poly_reverse(nmod_poly_t output, nmod_poly_t input, long m)
 
-    # ------------------------------------------------------
-    # String conversions and I/O
+    # Comparison
 
-    cdef int zmod_poly_from_string(zmod_poly_t poly, char* s)
-    cdef char* zmod_poly_to_string(zmod_poly_t poly)
-    cdef void zmod_poly_print(zmod_poly_t poly)
-    cdef void zmod_poly_fprint(zmod_poly_t poly, FILE* f)
-    cdef int zmod_poly_read(zmod_poly_t poly)
-    cdef int zmod_poly_fread(zmod_poly_t poly, FILE* f)
+    cdef int nmod_poly_equal(nmod_poly_t a, nmod_poly_t b)
+    cdef int nmod_poly_is_zero(nmod_poly_t poly)
+    cdef int nmod_poly_is_one(nmod_poly_t poly)
 
-    # ------------------------------------------------------
-    # Length and degree
+    # Getting and setting coefficients
 
-    cdef void __zmod_poly_normalise(zmod_poly_t poly)
-    cdef int __zmod_poly_normalised(zmod_poly_t poly)
-    cdef void zmod_poly_truncate(zmod_poly_t poly, unsigned long length)
+    cdef unsigned long nmod_poly_get_coeff_ui(nmod_poly_t poly, unsigned long j)
+    cdef void nmod_poly_set_coeff_ui(nmod_poly_t poly, unsigned long j, unsigned long c)
 
-    cdef unsigned long zmod_poly_length(zmod_poly_t poly)
+    # Input and output
 
-    cdef long zmod_poly_degree(zmod_poly_t poly)
+    cdef char * nmod_poly_get_str(nmod_poly_t poly)
+    cdef int nmod_poly_set_str(char * s, nmod_poly_t poly)
+    cdef int nmod_poly_print(nmod_poly_t a)
+    cdef int nmod_poly_fread(FILE * f, nmod_poly_t poly)
+    cdef int nmod_poly_fprint(FILE * f, nmod_poly_t poly)
+    cdef int nmod_poly_read(nmod_poly_t poly)
 
-    cdef unsigned long zmod_poly_modulus(zmod_poly_t poly)
+    # Shifting
 
-    cdef double zmod_poly_precomputed_inverse(zmod_poly_t poly)
+    cdef void nmod_poly_shift_left(nmod_poly_t res, nmod_poly_t poly, long k)
+    cdef void nmod_poly_shift_right(nmod_poly_t res, nmod_poly_t poly, long k)
 
-    # ------------------------------------------------------
-    # Assignment
-
-    cdef void _zmod_poly_set(zmod_poly_t res, zmod_poly_t poly)
-    cdef void zmod_poly_set(zmod_poly_t res, zmod_poly_t poly)
-
-    cdef void zmod_poly_zero(zmod_poly_t poly)
-
-    cdef void zmod_poly_swap(zmod_poly_t poly1, zmod_poly_t poly2)
-
-    #
-    # Subpolynomials
-    #
-
-    cdef void _zmod_poly_attach(zmod_poly_t output, zmod_poly_t input)
-
-    cdef void zmod_poly_attach(zmod_poly_t output, zmod_poly_t input)
-
-    #
-    # Attach input shifted right by n to output
-    #
-
-    cdef void _zmod_poly_attach_shift(zmod_poly_t output, zmod_poly_t input, unsigned long n)
-
-    cdef void zmod_poly_attach_shift(zmod_poly_t output, zmod_poly_t input, unsigned long n)
-
-    #
-    # Attach input to first n coefficients of input
-    #
-
-    cdef void _zmod_poly_attach_truncate(zmod_poly_t output,  zmod_poly_t input, unsigned long n)
-
-    cdef void zmod_poly_attach_truncate(zmod_poly_t output, zmod_poly_t input, unsigned long n)
-
-    #
-    # Comparison functions
-    #
-
-    cdef int zmod_poly_equal(zmod_poly_t poly1, zmod_poly_t poly2)
-
-    cdef int zmod_poly_is_one(zmod_poly_t poly1)
-
-    #
-    # Reversal
-    #
-
-    cdef void _zmod_poly_reverse(zmod_poly_t output, zmod_poly_t input, unsigned long length)
-    cdef void zmod_poly_reverse(zmod_poly_t output, zmod_poly_t input, unsigned long length)
-
-    #
-    # Monic polys
-    #
-
-    cdef void zmod_poly_make_monic(zmod_poly_t output, zmod_poly_t pol)
-
-    #
     # Addition and subtraction
-    #
 
-    cdef void zmod_poly_add(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
-    cdef void zmod_poly_add_without_mod(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
-    cdef void zmod_poly_sub(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
-    cdef void _zmod_poly_sub(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
-    cdef void zmod_poly_neg(zmod_poly_t res, zmod_poly_t poly)
+    cdef void nmod_poly_add(nmod_poly_t res, nmod_poly_t poly1, nmod_poly_t poly2)
+    cdef void nmod_poly_sub(nmod_poly_t res, nmod_poly_t poly1, nmod_poly_t poly2)
+    cdef void nmod_poly_neg(nmod_poly_t res, nmod_poly_t poly1)
 
-    #
-    # Shifting functions
-    #
+    # Scalar multiplication and division
 
-    cdef void zmod_poly_left_shift(zmod_poly_t res, zmod_poly_t poly, unsigned long k)
-    cdef void zmod_poly_right_shift(zmod_poly_t res, zmod_poly_t poly, unsigned long k)
+    cdef void nmod_poly_scalar_mul_nmod(nmod_poly_t res, nmod_poly_t poly1, mp_limb_t c)
+    cdef void nmod_poly_make_monic(nmod_poly_t output, nmod_poly_t input)
 
-    #
-    # Polynomial multiplication
-    # 
-    # All multiplication functions require that the modulus be no more than FLINT_BITS-1 bits
-    #
+    # Multiplication
 
-    cdef void zmod_poly_mul(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
-    cdef void zmod_poly_sqr(zmod_poly_t res, zmod_poly_t poly)
+    cdef void nmod_poly_mul(nmod_poly_t res, nmod_poly_t poly1, nmod_poly_t poly2)
+    cdef void nmod_poly_mullow(nmod_poly_t res, nmod_poly_t poly1, nmod_poly_t poly2, long trunc)
+    cdef void nmod_poly_mulhigh(nmod_poly_t res, nmod_poly_t poly1, nmod_poly_t poly2, long n)
+    cdef void nmod_poly_mulmod(nmod_poly_t res, nmod_poly_t poly1, nmod_poly_t poly2, nmod_poly_t f)
 
-    # Requires that poly1 bits + poly2 bits + log_length is not greater than 2*FLINT_BITS
+    # Powering
 
-    cdef void zmod_poly_mul_KS(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long bits_input)
-    cdef void _zmod_poly_mul_KS(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long bits_input)
+    cdef void nmod_poly_pow(nmod_poly_t res, nmod_poly_t poly, unsigned long e)
+    cdef void nmod_poly_pow_trunc(nmod_poly_t res, nmod_poly_t poly, unsigned long e, long trunc)
 
-    cdef void zmod_poly_mul_KS_trunc(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long bits_input, unsigned long trunc)
-    cdef void _zmod_poly_mul_KS_trunc(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long bits_input, unsigned long trunc)
-
-    cdef void _zmod_poly_mul_classical(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
-    cdef void __zmod_poly_mul_classical_mod_last(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long bits)
-    cdef void __zmod_poly_mul_classical_mod_throughout(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long bits)
-    cdef void zmod_poly_mul_classical(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
-    cdef void _zmod_poly_sqr_classical(zmod_poly_t res, zmod_poly_t poly)
-    cdef void zmod_poly_sqr_classical(zmod_poly_t res, zmod_poly_t poly)
-
-    cdef void _zmod_poly_mul_classical_trunc(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long trunc)
-    cdef void __zmod_poly_mul_classical_trunc_mod_last(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long bits, unsigned long trunc)
-    cdef void __zmod_poly_mul_classical_trunc_mod_throughout(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long bits, unsigned long trunc)
-    cdef void zmod_poly_mul_classical_trunc(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long trunc)
-
-    cdef void _zmod_poly_mul_classical_trunc_left(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long trunc)
-    cdef void __zmod_poly_mul_classical_trunc_left_mod_last(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long bits, unsigned long trunc)
-    cdef void __zmod_poly_mul_classical_trunc_left_mod_throughout(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long bits, unsigned long trunc)
-    cdef void zmod_poly_mul_classical_trunc_left(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long trunc)
-
-    cdef void zmod_poly_mul_trunc_n(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long trunc)
-    cdef void zmod_poly_mul_trunc_left_n(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, unsigned long trunc)
-
-    #
-    # Bit packing functions
-    #
-
-    cdef unsigned long zmod_poly_bits(zmod_poly_t poly)
-    cdef void _zmod_poly_bit_pack_mpn(mp_limb_t * res, zmod_poly_t poly, unsigned long bits, unsigned long length)
-    cdef void _zmod_poly_bit_unpack_mpn(zmod_poly_t poly, mp_limb_t *mpn, unsigned long length, unsigned long bits)
-
-    cdef void print_binary(unsigned long n, unsigned long len)
-    cdef void print_binary2(unsigned long n, unsigned long len, unsigned long space_bit)
-
-    #
-    # Scalar multiplication
-    #
-
-    cdef void _zmod_poly_scalar_mul(zmod_poly_t res, zmod_poly_t poly, unsigned long scalar)
-    cdef void zmod_poly_scalar_mul(zmod_poly_t res, zmod_poly_t poly, unsigned long scalar)
-    cdef void __zmod_poly_scalar_mul_without_mod(zmod_poly_t res, zmod_poly_t poly, unsigned long scalar)
-
-    # 
     # Division
-    #
 
-    cdef void zmod_poly_divrem_classical(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmod_poly_t B)
-    cdef void __zmod_poly_divrem_classical_mod_last(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmod_poly_t B)
-    cdef void zmod_poly_div_classical(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B)
-    cdef void __zmod_poly_div_classical_mod_last(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B)
-    cdef void zmod_poly_div_divconquer_recursive(zmod_poly_t Q, zmod_poly_t BQ, zmod_poly_t A, zmod_poly_t B)
-    cdef void zmod_poly_divrem_divconquer(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmod_poly_t B)
-    cdef void zmod_poly_div_divconquer(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B)
+    cdef void nmod_poly_divrem(nmod_poly_t Q, nmod_poly_t R, nmod_poly_t A, nmod_poly_t B)
+    cdef void nmod_poly_div(nmod_poly_t Q, nmod_poly_t A, nmod_poly_t B)
+    cdef void nmod_poly_inv_series(nmod_poly_t Qinv, nmod_poly_t Q, long n)
+    cdef void nmod_poly_div_series(nmod_poly_t Q, nmod_poly_t A, nmod_poly_t B, long n)
 
-    #
-    # Newton Inversion
-    #
+    # Derivative
 
-    cdef void zmod_poly_newton_invert_basecase(zmod_poly_t Q_inv, zmod_poly_t Q, unsigned long n)
-    cdef void zmod_poly_newton_invert(zmod_poly_t Q_inv, zmod_poly_t Q, unsigned long n)
+    cdef void nmod_poly_derivative(nmod_poly_t x_prime, nmod_poly_t x)
+    cdef void nmod_poly_integral(nmod_poly_t x_int, nmod_poly_t x)
 
-    #
-    # Newton Division
-    #
+    # Evaluation
 
-    cdef void zmod_poly_div_series(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B, unsigned long n)
-    cdef void zmod_poly_div_newton(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B)
-    cdef void zmod_poly_divrem_newton(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmod_poly_t B)
+    cdef mp_limb_t nmod_poly_evaluate_nmod(nmod_poly_t poly, mp_limb_t c)
+    cdef void nmod_poly_evaluate_nmod_vec(mp_ptr ys, nmod_poly_t poly, mp_srcptr xs, long n)
 
-    cdef void zmod_poly_divrem(zmod_poly_t Q, zmod_poly_t R, zmod_poly_t A, zmod_poly_t B)
+    # Interpolation
 
-    cdef void zmod_poly_div(zmod_poly_t Q, zmod_poly_t A, zmod_poly_t B)
+    cdef void nmod_poly_interpolate_nmod_vec(nmod_poly_t poly, mp_srcptr xs, mp_srcptr ys, long n)
 
-    #
-    # Resultant
-    #
+    # Composition
 
-    cdef unsigned long zmod_poly_resultant_euclidean(zmod_poly_t a, zmod_poly_t b)
+    cdef void nmod_poly_compose(nmod_poly_t res, nmod_poly_t poly1, nmod_poly_t poly2)
 
-    cdef unsigned long zmod_poly_resultant(zmod_poly_t a, zmod_poly_t b)
+    # Power series composition and reversion
 
-    #
+    cdef void nmod_poly_compose_series(nmod_poly_t res, nmod_poly_t poly1, nmod_poly_t poly2, long n)
+    cdef void nmod_poly_reverse_series(nmod_poly_t Qinv, nmod_poly_t Q, long n)
+
     # GCD
-    #
 
-    cdef void zmod_poly_gcd(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
-    cdef int zmod_poly_gcd_invert(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2)
-    cdef void zmod_poly_xgcd(zmod_poly_t res, zmod_poly_t s, zmod_poly_t t, zmod_poly_t poly1, zmod_poly_t poly2)
+    cdef void nmod_poly_gcd(nmod_poly_t G, nmod_poly_t A, nmod_poly_t B)
+    cdef void nmod_poly_xgcd(nmod_poly_t G, nmod_poly_t S, nmod_poly_t T, nmod_poly_t A, nmod_poly_t B)
+    mp_limb_t nmod_poly_resultant(nmod_poly_t f, nmod_poly_t g)
 
+    # Square roots
 
+    cdef void nmod_poly_invsqrt_series(nmod_poly_t g, nmod_poly_t h, long n)
+    cdef void nmod_poly_sqrt_series(nmod_poly_t g, nmod_poly_t h, long n)
+    int nmod_poly_sqrt(nmod_poly_t b, nmod_poly_t a)
 
-    # Composition / evaluation
+    # Transcendental functions
 
-    cdef unsigned long zmod_poly_evaluate(zmod_poly_t, unsigned long)
-    cdef void zmod_poly_compose_horner(zmod_poly_t, zmod_poly_t, zmod_poly_t)
+    cdef void nmod_poly_atan_series(nmod_poly_t g, nmod_poly_t h, long n)
+    cdef void nmod_poly_tan_series(nmod_poly_t g, nmod_poly_t h, long n)
+    cdef void nmod_poly_asin_series(nmod_poly_t g, nmod_poly_t h, long n)
+    cdef void nmod_poly_sin_series(nmod_poly_t g, nmod_poly_t h, long n)
+    cdef void nmod_poly_cos_series(nmod_poly_t g, nmod_poly_t h, long n)
+    cdef void nmod_poly_asinh_series(nmod_poly_t g, nmod_poly_t h, long n)
+    cdef void nmod_poly_atanh_series(nmod_poly_t g, nmod_poly_t h, long n)
+    cdef void nmod_poly_sinh_series(nmod_poly_t g, nmod_poly_t h, long n)
+    cdef void nmod_poly_cosh_series(nmod_poly_t g, nmod_poly_t h, long n)
+    cdef void nmod_poly_tanh_series(nmod_poly_t g, nmod_poly_t h, long n)
+    cdef void nmod_poly_log_series(nmod_poly_t res, nmod_poly_t f, long n)
+    cdef void nmod_poly_exp_series(nmod_poly_t f, nmod_poly_t h, long)
 
-    # Factorization
+    # Inflation and deflation
 
-    cdef bint zmod_poly_isirreducible(zmod_poly_t p)
+    cdef unsigned long nmod_poly_deflation(nmod_poly_t input)
+    cdef void nmod_poly_deflate(nmod_poly_t result, nmod_poly_t input, unsigned long deflation)
+    cdef void nmod_poly_inflate(nmod_poly_t result, nmod_poly_t input, unsigned long inflation)
 
-    ctypedef struct zmod_poly_factors_struct:
-        unsigned long num_factors
-        unsigned long* exponents
-        zmod_poly_t* factors
+    # Factoring
 
-    ctypedef zmod_poly_factors_struct* zmod_poly_factor_t
-
-    cdef void zmod_poly_factor_init(zmod_poly_factor_t)
-    cdef void zmod_poly_factor_clear(zmod_poly_factor_t)
-    cdef unsigned long zmod_poly_factor(zmod_poly_factor_t, zmod_poly_t)
-    cdef void zmod_poly_factor_square_free(zmod_poly_factor_t, zmod_poly_t)
-    cdef void zmod_poly_factor_berlekamp(zmod_poly_factor_t factors, zmod_poly_t f)
-
-    cdef void zmod_poly_factor_add(zmod_poly_factor_t fac, zmod_poly_t poly)
-    cdef void zmod_poly_factor_concat(zmod_poly_factor_t res, zmod_poly_factor_t fac)
-    cdef void zmod_poly_factor_print(zmod_poly_factor_t fac)
-    cdef void zmod_poly_factor_pow(zmod_poly_factor_t fac, unsigned long exp)
-
-    #
-    # Differentiation
-    #
- 
-    cdef void zmod_poly_derivative(zmod_poly_t res, zmod_poly_t poly)
-    
-    #
-    # Arithmetic modulo a polynomial
-    #
-    
-    cdef void zmod_poly_mulmod(zmod_poly_t res, zmod_poly_t poly1, zmod_poly_t poly2, zmod_poly_t f)
-    cdef void zmod_poly_powmod(zmod_poly_t res,zmod_poly_t pol, long exp, zmod_poly_t f)
+    cdef void nmod_poly_factor_clear(nmod_poly_factor_t fac)
+    cdef void nmod_poly_factor_init(nmod_poly_factor_t fac)
+    cdef void nmod_poly_factor_insert(nmod_poly_factor_t fac, nmod_poly_t poly, unsigned long exp)
+    cdef void nmod_poly_factor_print(nmod_poly_factor_t fac)
+    cdef void nmod_poly_factor_concat(nmod_poly_factor_t res, nmod_poly_factor_t fac)
+    cdef void nmod_poly_factor_pow(nmod_poly_factor_t fac, unsigned long exp)
+    cdef unsigned long nmod_poly_remove(nmod_poly_t f, nmod_poly_t p)
+    cdef int nmod_poly_is_irreducible(nmod_poly_t f)
+    cdef int nmod_poly_is_squarefree(nmod_poly_t f)
+    cdef void nmod_poly_factor_cantor_zassenhaus(nmod_poly_factor_t res, nmod_poly_t f)
+    cdef void nmod_poly_factor_berlekamp(nmod_poly_factor_t factors, nmod_poly_t f)
+    cdef void nmod_poly_factor_squarefree(nmod_poly_factor_t res, nmod_poly_t f)
+    cdef mp_limb_t nmod_poly_factor_with_berlekamp(nmod_poly_factor_t result, nmod_poly_t input)
+    cdef mp_limb_t nmod_poly_factor_with_cantor_zassenhaus(nmod_poly_factor_t result, nmod_poly_t input)
+    cdef mp_limb_t nmod_poly_factor(nmod_poly_factor_t result, nmod_poly_t input)

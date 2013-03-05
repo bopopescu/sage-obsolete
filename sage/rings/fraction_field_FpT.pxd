@@ -7,7 +7,7 @@ from sage.structure.element cimport Element, ModuleElement, RingElement
 from sage.categories.map cimport Section
 
 cdef class FpTElement(RingElement):
-    cdef zmod_poly_t _numer, _denom
+    cdef nmod_poly_t _numer, _denom
     cdef bint initalized
     cdef long p
 
@@ -23,4 +23,4 @@ cdef class FpT_iter:
     cdef parent
     cdef long degree
     cdef FpTElement cur
-    cdef zmod_poly_t g
+    cdef nmod_poly_t g

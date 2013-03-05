@@ -53,7 +53,7 @@ cdef class Fmpz_poly(SageObject):
         cdef long c
         cdef Integer w
         if PY_TYPE_CHECK(v, str):
-            if fmpz_poly_from_string(self.poly, v):
+            if not fmpz_poly_set_str(self.poly, v):
                 return
             else:
                 raise ValueError, "Unable to create Fmpz_poly from that string."
@@ -115,7 +115,7 @@ cdef class Fmpz_poly(SageObject):
             sage: f = Fmpz_poly([0,1]); f^7
             8  0 0 0 0 0 0 0 1
         """
-        cdef char* ss = fmpz_poly_to_string(self.poly)
+        cdef char* ss = fmpz_poly_get_str(self.poly)
         cdef object s = ss
         sage_free(ss)
         return s 
@@ -246,7 +246,7 @@ cdef class Fmpz_poly(SageObject):
         if not PY_TYPE_CHECK(self, Fmpz_poly):
             raise TypeError
         cdef Fmpz_poly res = <Fmpz_poly>PY_NEW(Fmpz_poly)
-        fmpz_poly_power(res.poly, (<Fmpz_poly>self).poly, nn)
+        fmpz_poly_pow(res.poly, (<Fmpz_poly>self).poly, nn)
         return res
         
     def pow_truncate(self, exp, n):
@@ -267,7 +267,7 @@ cdef class Fmpz_poly(SageObject):
             raise ValueError, "Exponent must be at least 0"
         cdef long exp_c = exp, nn = n
         cdef Fmpz_poly res = <Fmpz_poly>PY_NEW(Fmpz_poly)
-        fmpz_poly_power_trunc_n(res.poly, (<Fmpz_poly>self).poly, exp_c, nn)
+        fmpz_poly_pow_trunc(res.poly, (<Fmpz_poly>self).poly, exp_c, nn)
         return res
         
     def __floordiv__(left, right):
@@ -329,7 +329,7 @@ cdef class Fmpz_poly(SageObject):
         """
         cdef Fmpz_poly res = <Fmpz_poly>PY_NEW(Fmpz_poly)
 
-        fmpz_poly_left_shift(res.poly, self.poly, n)
+        fmpz_poly_shift_left(res.poly, self.poly, n)
 
         return res
 
@@ -345,7 +345,7 @@ cdef class Fmpz_poly(SageObject):
         """
         cdef Fmpz_poly res = <Fmpz_poly>PY_NEW(Fmpz_poly)
 
-        fmpz_poly_right_shift(res.poly, self.poly, n)
+        fmpz_poly_shift_right(res.poly, self.poly, n)
 
         return res 
 

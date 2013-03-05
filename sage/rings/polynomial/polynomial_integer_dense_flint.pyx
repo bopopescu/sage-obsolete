@@ -42,12 +42,13 @@ from sage.rings.fraction_field_element import FractionFieldElement
 from sage.rings.arith import lcm
 
 from sage.libs.flint.fmpz_poly cimport fmpz_poly_reverse
+from sage.libs.flint.ntl_interface cimport fmpz_poly_set_ZZX, fmpz_poly_get_ZZX
 from sage.libs.ntl.ntl_ZZX_decl cimport *, vec_pair_ZZX_long_c
 
 cdef extern from "limits.h":
     long LONG_MAX
 
-cdef extern from "FLINT/flint.h":
+cdef extern from "flint/flint.h":
     int FLINT_BITS
 
 cdef class Polynomial_integer_dense_flint(Polynomial):
@@ -201,7 +202,7 @@ cdef class Polynomial_integer_dense_flint(Polynomial):
                     degree = i
             try:
                 sig_on()
-                fmpz_poly_realloc(self.__poly, degree)
+                fmpz_poly_realloc(self.__poly, degree + 1)
                 sig_off()
             except RuntimeError:
                 raise OverflowError, "Cannot allocate memory!"
@@ -225,7 +226,7 @@ cdef class Polynomial_integer_dense_flint(Polynomial):
             check = False
             
         elif isinstance(x, ntl_ZZX):    # coercion from ntl.pyx object
-            ZZX_to_fmpz_poly(self.__poly, (<ntl_ZZX>x).x)
+            fmpz_poly_set_ZZX(self.__poly, (<ntl_ZZX>x).x)
             return
 
         elif isinstance(x, FractionFieldElement) and \
@@ -259,28 +260,28 @@ cdef class Polynomial_integer_dense_flint(Polynomial):
 
     def __call__(self, *x, **kwds):
         """
-        Calls this polynomial with the given parameters, which can be 
-        interpreted as polynomial composition or evaluation by this 
+        Calls this polynomial with the given parameters, which can be
+        interpreted as polynomial composition or evaluation by this
         method.
 
-        If the argument is not simply an integer (``int``, ``long`` or 
-        ``Integer``) or a polynomial (of the same type as ``self``), 
-        the call is passed on to the generic implementation in the 
+        If the argument is not simply an integer (``int``, ``long`` or
+        ``Integer``) or a polynomial (of the same type as ``self``),
+        the call is passed on to the generic implementation in the
         ``Polynomial`` class.
 
         EXAMPLES:
 
         The first example illustrates polynomial composition::
-        
+
             sage: R.<t> = ZZ[]
             sage: f = t^2 - 1
             sage: g = t + 1
             sage: f(g)          # indirect doctest
             t^2 + 2*t
-                
-        Now we illustrate how a polynomial can be evaluated at an 
+
+        Now we illustrate how a polynomial can be evaluated at an
         integer::
-        
+
             sage: f(2)          # indirect doctest
             3
         """
@@ -290,8 +291,8 @@ cdef class Polynomial_integer_dense_flint(Polynomial):
         cdef unsigned long limbs
         cdef fmpz_t a_fmpz
         cdef fmpz_t z_fmpz
-        
-        if len(x) == 1: 
+
+        if len(x) == 1:
             x0 = x[0]
             if isinstance(x, Polynomial_integer_dense_flint):
                 f = self._new()
@@ -310,41 +311,26 @@ cdef class Polynomial_integer_dense_flint(Polynomial):
                 if mpz_sgn(a.value) == 0:
                     return self[0]
 
-                # As of FLINT1.5, memory management for the fmpz_t type 
-                # has to be done manually.  Without inspection of all 
-                # coefficients, we can only naively bound the size of 
-                # the answer by the very large value of "limbs" below.  
-                # If this number is too large, we move on to the generic 
-                # polynomial evaluation code, which might either happen 
-                # to work (in special cases) or simply run out of memory.
-                # 
-                # It is expected that this workaround is unnecessary 
-                # with FLINT2.
-                if fmpz_poly_length(self.__poly) <= ((1 << 25) / fmpz_poly_length(self.__poly) - fmpz_poly_limbs(self.__poly)) / mpz_size(a.value):
+                z = PY_NEW(Integer)
 
-                    z = PY_NEW(Integer)
+                sig_on()
+                fmpz_init(a_fmpz)
+                fmpz_init(z_fmpz)
+                fmpz_set_mpz(a_fmpz, a.value)
+                fmpz_poly_evaluate_fmpz(z_fmpz, self.__poly, a_fmpz)
+                fmpz_get_mpz(z.value, z_fmpz)
+                fmpz_clear(a_fmpz)
+                fmpz_clear(z_fmpz)
+                sig_off()
 
-                    _sig_on
-                    limbs = fmpz_poly_length(self.__poly) * (fmpz_poly_limbs(self.__poly) + fmpz_poly_length(self.__poly) * mpz_size(a.value))
-                    a_fmpz = fmpz_init(mpz_size(a.value))
-                    z_fmpz = fmpz_init(limbs)
-                    mpz_to_fmpz(a_fmpz, a.value)
+                return z
 
-                    fmpz_poly_evaluate(z_fmpz, self.__poly, a_fmpz)
-
-                    fmpz_to_mpz(z.value, z_fmpz)
-                    fmpz_clear(a_fmpz)
-                    fmpz_clear(z_fmpz)
-                    _sig_off
-
-                    return z
-
-        return Polynomial.__call__(self, *x, **kwds) 
+        return Polynomial.__call__(self, *x, **kwds)
 
     cpdef Integer content(self):
         r"""
         Return the greatest common divisor of the coefficients of this
-        polynomial. 
+        polynomial.
 
         EXAMPLES::
 
@@ -366,10 +352,11 @@ cdef class Polynomial_integer_dense_flint(Polynomial):
             sage: (123456789123456789123456789123456789123456789*t).content()
             123456789123456789123456789123456789123456789
         """
-        cdef fmpz_t c = fmpz_init(fmpz_poly_limbs(self.__poly))
+        cdef fmpz_t c
+        fmpz_init(c)
         fmpz_poly_content(c, self.__poly)
         cdef Integer z = PY_NEW(Integer)
-        fmpz_to_mpz(z.value, c)
+        fmpz_get_mpz(z.value, c)
         fmpz_clear(c)
         return z
 
@@ -743,16 +730,15 @@ cdef class Polynomial_integer_dense_flint(Polynomial):
         """
         cdef Polynomial_integer_dense_flint ss = self._new()
         cdef Polynomial_integer_dense_flint tt = self._new()
-        cdef unsigned long bound = fmpz_poly_resultant_bound(self.__poly,
-                (<Polynomial_integer_dense_flint>right).__poly)
-        cdef fmpz_t r = fmpz_init(bound/FLINT_BITS+2)
+        cdef fmpz_t r
+        fmpz_init(r)
 
         sig_on()
         fmpz_poly_xgcd(r, ss.__poly, tt.__poly, self.__poly, 
                 (<Polynomial_integer_dense_flint>right).__poly)
         sig_off()
         cdef Integer rr = PY_NEW(Integer)
-        fmpz_to_mpz(rr.value, r)
+        fmpz_get_mpz(rr.value, r)
         fmpz_clear(r)
 
         if rr.is_zero():
@@ -861,7 +847,7 @@ cdef class Polynomial_integer_dense_flint(Polynomial):
                 return res
         if exp < 0:
             sig_on()
-            fmpz_poly_power(res.__poly, self.__poly, -nn)
+            fmpz_poly_pow(res.__poly, self.__poly, -nn)
             sig_off()
             return ~res
         else:
@@ -871,7 +857,7 @@ cdef class Polynomial_integer_dense_flint(Polynomial):
                 sig_off()
             else:
                 sig_on()
-                fmpz_poly_power(res.__poly, self.__poly, nn)
+                fmpz_poly_pow(res.__poly, self.__poly, nn)
                 sig_off()
             return res
 
@@ -910,7 +896,7 @@ cdef class Polynomial_integer_dense_flint(Polynomial):
         if not PY_TYPE_CHECK(right, Polynomial_integer_dense_flint):
             if right in ZZ:
                 sig_on()
-                fmpz_poly_scalar_div_mpz(res.__poly, self.__poly,
+                fmpz_poly_scalar_fdiv_mpz(res.__poly, self.__poly,
                         (<Integer>ZZ(right)).value)
                 sig_off()
                 return res
@@ -1062,7 +1048,7 @@ cdef class Polynomial_integer_dense_flint(Polynomial):
         cdef ZZX_c ntl_poly
         cdef ZZ_c* temp 
         cdef Integer x 
-        fmpz_poly_to_ZZX(ntl_poly, self.__poly)
+        fmpz_poly_get_ZZX(ntl_poly, self.__poly)
 
         temp = ZZX_discriminant(&ntl_poly, proof)
         x = PY_NEW(Integer)
@@ -1120,17 +1106,17 @@ cdef class Polynomial_integer_dense_flint(Polynomial):
 
             fmpz_poly_primitive_part(ppart, self.__poly)
 
-            fmpz_poly_to_ZZX(ntl_poly, ppart)
+            fmpz_poly_get_ZZX(ntl_poly, ppart)
             fmpz_poly_clear(ppart)
         else:
-            fmpz_poly_to_ZZX(ntl_poly, self.__poly)
+            fmpz_poly_get_ZZX(ntl_poly, self.__poly)
 
         ZZX_squarefree_decomposition(&v, &e, &n, &ntl_poly)
 
         F = []
         for i from 0 <= i < n:
             fac = self._new()
-            ZZX_to_fmpz_poly(fac.__poly, v[i][0])
+            fmpz_poly_set_ZZX(fac.__poly, v[i][0])
             F.append( (fac,e[i]) )
             ZZX_delete(v[i])
         sage_free(v)
@@ -1170,7 +1156,7 @@ cdef class Polynomial_integer_dense_flint(Polynomial):
         cdef long i
         cdef int sig_me = fmpz_poly_degree(self.__poly)
 
-        fmpz_poly_to_ZZX(ntl_poly, self.__poly)
+        fmpz_poly_get_ZZX(ntl_poly, self.__poly)
 
         if sig_me > 10:
             sig_on()
@@ -1187,15 +1173,15 @@ cdef class Polynomial_integer_dense_flint(Polynomial):
 
         if not ZZ_IsOne(content):
             fac_py = self._new()
-            tcontent = fmpz_init(ZZ_limbs(content))
-            ZZ_to_fmpz(tcontent, content)
+            fmpz_init(tcontent)
+            fmpz_set_ZZ(tcontent, content)
             fmpz_poly_set_coeff_fmpz(fac_py.__poly, 0, tcontent)
             results.append( (fac_py,1) )
             fmpz_clear(tcontent)
 
         for i from 0 <= i < factors.length():
             fac_py = self._new()
-            ZZX_to_fmpz_poly(fac_py.__poly, factors.RawGet(i).a)
+            fmpz_poly_set_ZZX(fac_py.__poly, factors.RawGet(i).a)
             results.append( (fac_py,factors.RawGet(i).b) )
         return Factorization(results, unit = unit)
     
@@ -1359,16 +1345,15 @@ cdef class Polynomial_integer_dense_flint(Polynomial):
         elif self.parent() is not other.parent():
             raise TypeError
 
-        cdef unsigned long bound = fmpz_poly_resultant_bound(self.__poly,
-                (<Polynomial_integer_dense_flint>other).__poly)
-        cdef fmpz_t res = fmpz_init(bound/FLINT_BITS + 2)
+        cdef fmpz_t res
+        fmpz_init(res)
         cdef Integer x = PY_NEW(Integer)
 
         sig_on()
         fmpz_poly_resultant(res, self.__poly, 
                 (<Polynomial_integer_dense_flint>other).__poly)
         sig_off()
-        fmpz_to_mpz(x.value, res)
+        fmpz_get_mpz(x.value, res)
         fmpz_clear(res)
         return x
 
