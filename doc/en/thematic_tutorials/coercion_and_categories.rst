@@ -406,9 +406,9 @@ coincide::
 
     sage: import inspect
     sage: len([s for s in dir(MS1) if inspect.ismethod(getattr(MS1,s,None))])
-    51
+    54
     sage: len([s for s in dir(MS2) if inspect.ismethod(getattr(MS2,s,None))])
-    73
+    76
     sage: MS1.__class__ is MS2.__class__
     True
 
@@ -1471,7 +1471,10 @@ Here are the tests that form the test suite of quotient fields::
      '_test_characteristic_fields',
      '_test_distributivity',
      '_test_elements',
-     '_test_elements_eq',
+     '_test_elements_eq_reflexive',
+     '_test_elements_eq_symmetric',
+     '_test_elements_eq_transitive',
+     '_test_elements_neq',
      '_test_one',
      '_test_prod',
      '_test_some_elements',
@@ -1516,7 +1519,10 @@ Let us see what tests are actually performed::
       running ._test_not_implemented_methods() . . . pass
       running ._test_pickling() . . . pass
       pass
-    running ._test_elements_eq() . . . pass
+    running ._test_elements_eq_reflexive() . . . pass
+    running ._test_elements_eq_symmetric() . . . pass
+    running ._test_elements_eq_transitive() . . . pass
+    running ._test_elements_neq() . . . pass
     running ._test_eq() . . . pass
     running ._test_not_implemented_methods() . . . pass
     running ._test_one() . . . pass
@@ -1678,7 +1684,10 @@ interesting.
       running ._test_not_implemented_methods() . . . pass
       running ._test_pickling() . . . pass
       pass
-    running ._test_elements_eq() . . . pass
+    running ._test_elements_eq_reflexive() . . . pass
+    running ._test_elements_eq_symmetric() . . . pass
+    running ._test_elements_eq_transitive() . . . pass
+    running ._test_elements_neq() . . . pass
     running ._test_eq() . . . pass
     running ._test_not_implemented_methods() . . . pass
     running ._test_one() . . . pass
