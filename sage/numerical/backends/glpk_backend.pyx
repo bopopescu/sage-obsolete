@@ -1215,6 +1215,8 @@ cdef class GLPKBackend(GenericBackend):
             sage: p.add_linear_constraint([[0, 1], [1, 2]], None, 3)
             sage: p.set_objective([2, 5])
             sage: p.write_lp(os.path.join(SAGE_TMP, "lp_problem.lp"))
+            Writing problem data to ...
+            9 lines were written
         """
         glp_write_lp(self.lp, NULL, filename)
 
@@ -1235,6 +1237,8 @@ cdef class GLPKBackend(GenericBackend):
             sage: p.add_linear_constraint([[0, 1], [1, 2]], None, 3)
             sage: p.set_objective([2, 5])
             sage: p.write_mps(os.path.join(SAGE_TMP, "lp_problem.mps"), 2)
+            Writing problem data to...
+            17 records were written
         """
         glp_write_mps(self.lp, modern, NULL,  filename)
 
@@ -1740,25 +1744,26 @@ cdef class GLPKBackend(GenericBackend):
             sage: import sage.numerical.backends.glpk_backend as backend
             sage: p.solver_parameter(backend.glp_simplex_or_intopt, backend.glp_simplex_only)
             sage: p.print_ranges()
-            ...
+            glp_print_ranges: optimal basic solution required
             1
             sage: p.solve()
             0
             sage: p.print_ranges()
+            Write sensitivity analysis report to...
             GLPK ... - SENSITIVITY ANALYSIS REPORT                                                                         Page   1
             <BLANKLINE>
-            Problem:    
+            Problem:
             Objective:  7.5 (MAXimum)
             <BLANKLINE>
                No. Row name     St      Activity         Slack   Lower bound       Activity      Obj coef  Obj value at Limiting
                                                       Marginal   Upper bound          range         range   break point variable
             ------ ------------ -- ------------- ------------- -------------  ------------- ------------- ------------- ------------
-                 1              NU       3.00000        .               -Inf         .           -2.50000        .     
+                 1              NU       3.00000        .               -Inf         .           -2.50000        .
                                                        2.50000       3.00000           +Inf          +Inf          +Inf
             <BLANKLINE>
             GLPK ... - SENSITIVITY ANALYSIS REPORT                                                                         Page   2
             <BLANKLINE>
-            Problem:    
+            Problem:
             Objective:  7.5 (MAXimum)
             <BLANKLINE>
                No. Column name  St      Activity      Obj coef   Lower bound       Activity      Obj coef  Obj value at Limiting
@@ -1773,8 +1778,6 @@ cdef class GLPKBackend(GenericBackend):
             End of report
             <BLANKLINE>
             0
-
-
         """
 
         from sage.misc.all import SAGE_TMP

@@ -43,6 +43,10 @@ AUTHORS:
 
 - Vincent Delecroix (2010-12-28): added unicode in Integer.__init__
 
+- David Roe (2012-03): deprecate :meth:`~sage.rings.integer.Integer.is_power`
+  in favour of :meth:`~sage.rings.integer.Integer.is_perfect_power` (see
+  :trac:`12116`)
+
 EXAMPLES:
 
 Add 2 integers::
@@ -175,6 +179,7 @@ import sage.rings.infinity
 import sage.libs.pari.all
 
 from sage.structure.element import canonical_coercion
+from sage.misc.superseded import deprecated_function_alias
 
 cdef object numpy_long_interface = {'typestr': '=i4' if sizeof(long) == 4 else '=i8' }
 cdef object numpy_int64_interface = {'typestr': '=i8'}
@@ -3199,14 +3204,15 @@ cdef class Integer(sage.structure.element.EuclideanDomainElement):
         """
         return mpz_pythonhash(self.value)
 
-    def trial_division(self, long bound=LONG_MAX):
+    def trial_division(self, long bound=LONG_MAX, long start=2):
         """
-        Return smallest prime divisor of self up to bound,
-        or abs(self) if no such divisor is found.
+        Return smallest prime divisor of self up to bound, beginning
+        checking at start, or abs(self) if no such divisor is found.
 
         INPUT:
 
             - ``bound`` -- a positive integer that fits in a C signed long
+            - ``start`` -- a positive integer that fits in a C signed long
 
         OUTPUT:
 
@@ -3253,24 +3259,48 @@ cdef class Integer(sage.structure.element.EuclideanDomainElement):
             3
             sage: n = 5 * next_prime(10^4); n.trial_division()
             5
+
+        You can specify a starting point::
+
+            sage: n = 3*5*101*103
+            sage: n.trial_division(start=50)
+            101
         """
         if bound <= 0:
             raise ValueError, "bound must be positive"
         if mpz_sgn(self.value) == 0:
             raise ValueError, "self must be nonzero"
         cdef unsigned long n, m=7, i=1, limit, dif[8]
+        if start > 7:
+            # We need to find i.
+            m = start % 30
+            if 0 <= m <= 1:
+                i = 0; m = start + (1-m)
+            elif 1 < m <= 7:
+                i = 1; m = start + (7-m)
+            elif 7 < m <= 11:
+                i = 2; m = start + (11-m)
+            elif 11 < m <= 13:
+                i = 3; m = start + (13-m)
+            elif 13 < m <= 17:
+                i = 4; m = start + (17-m)
+            elif 17 < m <= 19:
+                i = 5; m = start + (19-m)
+            elif 19 < m <= 23:
+                i = 6; m = start + (23-m)
+            elif 23 < m <= 29:
+                i = 7; m = start + (29-m)
         dif[0]=6;dif[1]=4;dif[2]=2;dif[3]=4;dif[4]=2;dif[5]=4;dif[6]=6;dif[7]=2
         cdef Integer x = PY_NEW(Integer)
         if mpz_fits_ulong_p(self.value):
             n = mpz_get_ui(self.value)   # ignores the sign automatically
             if n == 1: return one
-            if n%2==0:
+            if start <= 2 and n%2==0:
                 mpz_set_ui(x.value,2); return x
-            if n%3==0:
+            if start <= 3 and n%3==0:
                 mpz_set_ui(x.value,3); return x
-            if n%5==0:
+            if start <= 5 and n%5==0:
                 mpz_set_ui(x.value,5); return x
-                
             limit = <unsigned long> sqrt_double(<double> n)
             if bound < limit: limit = bound
             # Algorithm: only trial divide by numbers that
@@ -3284,11 +3314,11 @@ cdef class Integer(sage.structure.element.EuclideanDomainElement):
             return x
         else:
             # self is big -- it doesn't fit in unsigned long.
-            if mpz_even_p(self.value):
+            if start <= 2 and mpz_even_p(self.value):
                 mpz_set_ui(x.value,2); return x
-            if  mpz_divisible_ui_p(self.value,3):
+            if start <= 3 and mpz_divisible_ui_p(self.value,3):
                 mpz_set_ui(x.value,3); return x
-            if  mpz_divisible_ui_p(self.value,5):
+            if start <= 5 and mpz_divisible_ui_p(self.value,5):
                 mpz_set_ui(x.value,5); return x
 
             # x.value = floor(sqrt(self.value))
@@ -4045,19 +4075,46 @@ cdef class Integer(sage.structure.element.EuclideanDomainElement):
         """
         return mpz_perfect_square_p(self.value)
 
-    def is_power(self):
+    is_power = deprecated_function_alias(12116, is_perfect_power)
+
+    def perfect_power(self):
         r"""
-        Returns ``True`` if self is a perfect power, i.e. if there exist
-        integers `a` and `b`, `b > 1` with `self = a^b`.
-        
+        Returns ``(a, b)``, where this integer is `a^b` and `b` is maximal.
+
+        If called on `-1`, `0` or `1`, `b` will be `1`, since there is no
+        maximal value of `b`.
+
+        .. seealso::
+
+            - :meth:`is_perfect_power`: testing whether an integer is a perfect
+              power is usually faster than finding `a` and `b`.
+            - :meth:`is_prime_power`: checks whether the base is prime.
+            - :meth:`is_power_of`: if you know the base already, this method is
+              the fastest option.
+
         EXAMPLES::
-        
-            sage: Integer(-27).is_power()
-            True
-            sage: Integer(12).is_power()
-            False
+
+            sage: 144.perfect_power()
+            (12, 2)
+            sage: 1.perfect_power()
+            (1, 1)
+            sage: 0.perfect_power()
+            (0, 1)
+            sage: (-1).perfect_power()
+            (-1, 1)
+            sage: (-8).perfect_power()
+            (-2, 3)
+            sage: (-4).perfect_power()
+            (-4, 1)
+            sage: (101^29).perfect_power()
+            (101, 29)
+            sage: (-243).perfect_power()
+            (-3, 5)
+            sage: (-64).perfect_power()
+            (-4, 3)
         """
-        return mpz_perfect_power_p(self.value)
+        parians = self._pari_().ispower()
+        return Integer(parians[1]), Integer(parians[0])
 
     cdef bint _is_power_of(Integer self, Integer n):
         r"""
@@ -4183,6 +4240,15 @@ cdef class Integer(sage.structure.element.EuclideanDomainElement):
         r"""
         Returns ``True`` if there is an integer b with
         `\mathtt{self} = n^b`.
+
+        .. seealso::
+
+            - :meth:`perfect_power`: Finds the minimal base for which this
+              integer is a perfect power.
+            - :meth:`is_perfect_power`: If you don't know the base but just
+              want to know if this integer is a perfect power, use this
+              function.
+            - :meth:`is_prime_power`: Checks whether the base is prime.
         
         EXAMPLES::
         
@@ -4217,7 +4283,7 @@ cdef class Integer(sage.structure.element.EuclideanDomainElement):
         .. note::
 
            For large integers self, is_power_of() is faster than
-           is_power(). The following examples gives some indication of
+           is_perfect_power(). The following examples gives some indication of
            how much faster.
         
         ::
@@ -4226,7 +4292,7 @@ cdef class Integer(sage.structure.element.EuclideanDomainElement):
             sage: b.exact_log(2)
             14446
             sage: t=cputime()
-            sage: for a in range(2, 1000): k = b.is_power()
+            sage: for a in range(2, 1000): k = b.is_perfect_power()
             sage: cputime(t)      # random
             0.53203299999999976 
             sage: t=cputime()
@@ -4244,7 +4310,7 @@ cdef class Integer(sage.structure.element.EuclideanDomainElement):
             sage: b.exact_log(2)
             1437
             sage: t=cputime()
-            sage: for a in range(2, 10000): k = b.is_power() # note that we change the range from the example above
+            sage: for a in range(2, 10000): k = b.is_perfect_power() # note that we change the range from the example above
             sage: cputime(t)      # random
             0.17201100000000036 
             sage: t=cputime(); TWO=int(2)
@@ -4266,14 +4332,23 @@ cdef class Integer(sage.structure.element.EuclideanDomainElement):
 
     def is_prime_power(self, flag=0):
         r"""
-        Returns True if `x` is a prime power, and False otherwise.
+        Returns True if this integer is a prime power, and False otherwise.
         
         INPUT:
            
-           -  ``flag`` (for primality testing) - int
-           - ``0`` (default): use a combination of algorithms.
-           - ``1``: certify primality using the Pocklington-Lehmer test.
-           - ``2``: certify primality using the APRCL test.
+        - ``flag`` (for primality testing) - int. Values are:
+
+          - ``0`` (default): use a combination of algorithms.
+          - ``1``: certify primality using the Pocklington-Lehmer test.
+          - ``2``: certify primality using the APRCL test.
+
+        .. seealso::
+
+            - :meth:`perfect_power`: Finds the minimal base for which integer
+              is a perfect power.
+            - :meth:`is_perfect_power`: Doesn't test whether the base is prime.
+            - :meth:`is_power_of`: If you know the base already this method is
+              the fastest option.
 
         EXAMPLES::
         
@@ -4288,7 +4363,7 @@ cdef class Integer(sage.structure.element.EuclideanDomainElement):
             sage: (10000).is_prime_power(flag=1)
             False
 
-        We check that \#4777 is fixed::
+        We check that :trac:`4777` is fixed::
 
             sage: n = 150607571^14
             sage: n.is_prime_power()
@@ -4305,7 +4380,7 @@ cdef class Integer(sage.structure.element.EuclideanDomainElement):
         if not self.is_perfect_power():
             return False
         k, g = self._pari_().ispower()
-        if not k:
+        if k == 1:
             raise RuntimeError, "Inconsistent results between GMP and PARI"
         return g.isprime(flag=flag)
 
@@ -4399,10 +4474,24 @@ cdef class Integer(sage.structure.element.EuclideanDomainElement):
         
     def is_perfect_power(self):
         r"""
-        Returns ``True`` if self is a perfect power.
+        Returns ``True`` if ``self`` is a perfect power, ie if there exist integers
+        `a` and `b`, `b > 1` with ``self`` `= a^b`.
+
+        .. seealso::
+
+            - :meth:`perfect_power`: Finds the minimal base for which this
+              integer is a perfect power.
+            - :meth:`is_power_of`: If you know the base already this method is
+              the fastest option.
+            - :meth:`is_prime_power`: Checks whether the base is prime.
         
         EXAMPLES::
         
+            sage: Integer(-27).is_perfect_power()
+            True
+            sage: Integer(12).is_perfect_power()
+            False
+
             sage: z = 8
             sage: z.is_perfect_power()
             True
@@ -4415,8 +4504,15 @@ cdef class Integer(sage.structure.element.EuclideanDomainElement):
             sage: (-4).is_perfect_power()
             False
 
-        This is a test to make sure we work around a bug in GMP,
-        see trac \#4612.
+            sage: (4).is_power()
+            doctest:...: DeprecationWarning: is_power is deprecated. Please use is_perfect_power instead.
+            See http://trac.sagemath.org/12116 for details.
+            True
+
+        TESTS:
+
+        This is a test to make sure we work around a bug in GMP, see
+        :trac:`4612`.
 
         ::
 

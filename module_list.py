@@ -3,21 +3,11 @@
 import os, sys
 from distutils.core import setup
 from distutils.extension import Extension
+from sage.env import *
 
-
-#########################################################
-### Configure SAGE_ROOT
-#########################################################
-
-if not os.environ.has_key('SAGE_ROOT'):
-    print "    ERROR: The environment variable SAGE_ROOT must be defined."
-    sys.exit(1)
-else:
-    SAGE_ROOT  = os.environ['SAGE_ROOT']
-    SAGE_LOCAL = SAGE_ROOT + '/local'
-    SAGE_DEVEL = SAGE_ROOT + '/devel'
-    SAGE_INC = SAGE_LOCAL + '/include/'
-
+SAGE_INC = os.path.join(SAGE_LOCAL, 'include')
+# this is needed until someone fixes the usage of SAGE_INC in this file
+SAGE_INC += '/'
 
 #########################################################
 ### BLAS setup
@@ -256,6 +246,9 @@ ext_modules = [
     Extension('sage.combinat.enumeration_mod_permgroup',
               sources=['sage/combinat/enumeration_mod_permgroup.pyx']),
 
+    Extension('sage.combinat.q_bernoulli',
+              sources = ['sage/combinat/q_bernoulli.pyx']),
+
     ################################
     ## 
     ## sage.crypto
@@ -266,7 +259,7 @@ ext_modules = [
               sources = ['sage/crypto/boolean_function.pyx']),
 
     ################################
-    ## 
+    ##
     ## sage.ext
     ##
     ################################
@@ -286,10 +279,13 @@ ext_modules = [
     Extension('sage.ext.multi_modular',
               sources = ['sage/ext/multi_modular.pyx'],
               extra_compile_args = ['-std=c99'],
-              libraries=['gmp']), 
+              libraries=['gmp']),
+
+    Extension('sage.ext.pselect',
+              sources = ['sage/ext/pselect.pyx']),
 
     ################################
-    ## 
+    ##
     ## sage.finance
     ##
     ################################
@@ -672,7 +668,7 @@ ext_modules = [
               sources = ['sage/libs/lcalc/lcalc_Lfunction.pyx'],
               libraries = ['m', 'ntl', 'mpfr', 'gmp', 'gmpxx',
                            'Lfunction', 'stdc++'],
-              include_dirs = [SAGE_INC + "lcalc/"],
+              include_dirs = [SAGE_INC + "libLfunction/"],
               extra_compile_args=["-O3", "-ffast-math"],
               language = 'c++'),
      
@@ -1196,6 +1192,9 @@ ext_modules = [
     
     Extension('sage.misc.classcall_metaclass', 
               sources = ['sage/misc/classcall_metaclass.pyx']), 
+
+    Extension('sage.misc.fast_methods',
+              sources = ['sage/misc/fast_methods.pyx']),
 
     Extension('sage.misc.binary_tree',
               sources = ['sage/misc/binary_tree.pyx']),

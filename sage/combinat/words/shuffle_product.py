@@ -62,7 +62,15 @@ class ShuffleProduct_w1w2(CombinatorialClass):
             True
             sage: w in S
             False
+
+        We check that :trac:`14121` is solved::
+
+            sage: w = W('ab')
+            sage: x = W('ac')
+            sage: x*w in w.shuffle(x)
+            True
         """
+        from sage.combinat.words.word import Word
         if not isinstance(x, Word_class):
             return False
         if x.length() !=self._w1.length() + self._w2.length():
@@ -75,6 +83,8 @@ class ShuffleProduct_w1w2(CombinatorialClass):
                 letter = wx.pop(0)
             except IndexError:
                 return False
+            if len(w1) > 0 and len(w2) > 0 and letter == w1[0] == w2[0]:
+                return Word(wx) in self._w1[1:].shuffle(self._w2) or Word(wx) in self._w1.shuffle(self._w2[1:])
             if len(w1) > 0 and letter == w1[0]:
                 w1.pop(0)
             elif len(w2) > 0 and letter == w2[0]:
@@ -82,7 +92,7 @@ class ShuffleProduct_w1w2(CombinatorialClass):
             else:
                 return False
         return len(wx) == 0
-        
+
     def cardinality(self):
         """
         Returns the number of words in the shuffle product

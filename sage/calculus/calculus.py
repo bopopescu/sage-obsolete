@@ -537,17 +537,17 @@ def symbolic_sum(expression, v, a, b, algorithm='maxima'):
 
     This summation only Mathematica can perform::
 
-        sage: symbolic_sum(1/(1+k^2), k, -oo, oo, algorithm = 'mathematica')     # optional  -- requires mathematica
+        sage: symbolic_sum(1/(1+k^2), k, -oo, oo, algorithm = 'mathematica')     # optional - mathematica
         pi*coth(pi)
 
     An example of this summation with Giac::
 
-        sage: symbolic_sum(1/(1+k^2), k, -oo, oo, algorithm = 'giac')           # optional -- requires giac
+        sage: symbolic_sum(1/(1+k^2), k, -oo, oo, algorithm = 'giac')           # optional - giac
         -(pi*e^(-2*pi) - pi*e^(2*pi))/(e^(-2*pi) + e^(2*pi) - 2)
 
     Use Maple as a backend for summation::
 
-        sage: symbolic_sum(binomial(n,k)*x^k, k, 0, n, algorithm = 'maple')      # optional  -- requires maple
+        sage: symbolic_sum(binomial(n,k)*x^k, k, 0, n, algorithm = 'maple')      # optional - maple
         (x + 1)^n
 
     TESTS:
@@ -1165,6 +1165,11 @@ def limit(ex, dir=None, taylor=False, algorithm='maxima', **argv):
         'below' is deprecated. Please use 'left' or '-' instead.
         See http://trac.sagemath.org/9200 for details.
         -Infinity
+
+    Check that :trac:`12708` is fixed::
+
+        sage: limit(tanh(x),x=0)
+        0
     """
     if not isinstance(ex, Expression):
         ex = SR(ex)
@@ -1740,6 +1745,7 @@ def symbolic_expression_from_maxima_string(x, equals_sub=False, maxima=maxima):
         sage: sefms("x # 3") == SR(x != 3) 
         True
         sage: solve([x != 5], x)
+        #0: solve_rat_ineq(ineq=x # 5)
         [[x - 5 != 0]]
         sage: solve([2*x==3, x != 5], x)
         [[x == (3/2), (-7/2) != 0]]

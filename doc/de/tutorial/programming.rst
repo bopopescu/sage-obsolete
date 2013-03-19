@@ -618,8 +618,8 @@ Wir haben schon ein paar Beispiele gesehen in denen die
 ::
 
     >>> for i in range(5):
-           print(i)
-       
+    ...     print(i)
+    ...
     0
     1
     2
@@ -636,7 +636,8 @@ Beispiel.
 ::
 
     sage: for i in range(5):
-    ...       print(i)  # now hit enter twice
+    ....:     print(i)  # now hit enter twice
+    ....:
     0
     1
     2
@@ -759,7 +760,7 @@ die :math:`1 \in \GF{5}` gleich der :math:`1 \in \QQ` festlegt.
 
 ::
 
-    sage: magma('GF(5)!1 eq Rationals()!1')            # optional magma required
+    sage: magma('GF(5)!1 eq Rationals()!1')            # optional - magma
     true
 
 Profiling

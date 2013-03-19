@@ -14,9 +14,27 @@ TESTS:
         sage: import inspect
         sage: from sage import *
         sage: frames=[x for x in gc.get_objects() if inspect.isframe(x)]
-        sage: len(frames)
-        11
-    
+
+    We exclude the known files and check to see that there are no others::
+
+        sage: import os
+        sage: allowed = [os.path.join("lib","python","threading.py")]
+        sage: allowed.append(os.path.join("lib","python","multiprocessing"))
+        sage: allowed.append(os.path.join("sage","doctest"))
+        sage: allowed.append(os.path.join("local","bin","sage-runtests"))
+        sage: allowed.append(os.path.join("site-packages","IPython"))
+        sage: allowed.append(os.path.join("local","bin","sage-ipython"))
+        sage: allowed.append("<ipython console>")
+        sage: allowed.append("<doctest sage.all[3]>")
+        sage: allowed.append(os.path.join("sage","combinat","species","generating_series.py"))
+        sage: for i in frames:
+        ....:     filename, lineno, funcname, linelist, indx = inspect.getframeinfo(i)
+        ....:     for nm in allowed:
+        ....:         if nm in filename:
+        ....:             break
+        ....:     else:
+        ....:         print filename
+        ....:
 """
 
 ###############################################################################
@@ -40,8 +58,7 @@ TESTS:
 import os, sys
 import operator
 
-if 'SAGE_ROOT' not in os.environ:
-    raise RuntimeError("To use the Sage libraries, set the environment variable SAGE_ROOT to the Sage build directory and LD_LIBRARY_PATH to $SAGE_ROOT/local/lib")
+from sage.env import SAGE_ROOT, SAGE_DOC, SAGE_LOCAL, DOT_SAGE, SAGE_ENV
  
 if sys.version_info[:2] < (2, 5):
     print >>sys.stderr, "Sage requires Python 2.5 or newer"
@@ -65,6 +82,7 @@ from sage.misc.all       import *         # takes a while
 from sage.misc.sh import sh
 
 from sage.libs.all       import *
+from sage.doctest.all    import *
 
 from sage.rings.all      import *
 from sage.matrix.all     import *
@@ -292,8 +310,6 @@ def _write_started_file():
         sage: os.path.isfile(started_file)
         True
     """
-    from sage.misc.all import SAGE_LOCAL
-
     started_file = os.path.join(SAGE_LOCAL, 'etc', 'sage-started.txt')
     # Do nothing if the file already exists
     if os.path.isfile(started_file):

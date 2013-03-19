@@ -1,5 +1,7 @@
 .. -*- coding: utf-8 -*-
 
+.. _coercion_and_categories:
+
 =================================================
 How to implement new algebraic structures in Sage
 =================================================
@@ -404,9 +406,9 @@ coincide::
 
     sage: import inspect
     sage: len([s for s in dir(MS1) if inspect.ismethod(getattr(MS1,s,None))])
-    54
+    51
     sage: len([s for s in dir(MS2) if inspect.ismethod(getattr(MS2,s,None))])
-    76
+    73
     sage: MS1.__class__ is MS2.__class__
     True
 

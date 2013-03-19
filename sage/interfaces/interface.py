@@ -114,7 +114,7 @@ class Interface(ParentWithBase):
             sage: f = open(filename, 'w')
             sage: f.write('x = 2\n')
             sage: f.close()
-            sage: octave.read(filename)  #optional -- requires Octave
+            sage: octave.read(filename)  # optional - octave
             sage: octave.get('x')        #optional
             ' 2'
             sage: import os
@@ -516,7 +516,7 @@ class Interface(ParentWithBase):
             return ParentWithBase.__getattribute__(self, attrname)
         except AttributeError:
             if attrname[:1] == "_":
-                raise AttributeError
+                raise
             return self._function_class()(self, attrname)
 
     def __cmp__(self, other):

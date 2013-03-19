@@ -18,7 +18,6 @@ k-Schur Functions
 #*****************************************************************************
 from sage.categories.morphism import SetMorphism
 from sage.categories.homset import Hom
-from sage.categories.examples.infinite_enumerated_sets import NonNegativeIntegers
 import sage.combinat.partition
 import sfa
 
@@ -244,7 +243,7 @@ class kSchurFunctions_t(kSchurFunctions_generic):
         Sym = SymmetricFunctions(R)
         sfa.SymmetricFunctionAlgebra_generic.__init__(self, Sym)
         # so we need to take some counter measures
-        self._basis_keys = sage.combinat.partition.Partitions(NonNegativeIntegers(), max_part=k)
+        self._basis_keys = sage.combinat.partition.Partitions(max_part=k)
         # The following line is just a temporary workaround to keep
         # the repr of those k-schur as they were before #13404; since
         # they are deprecated, there is no need to bother about them.
@@ -368,7 +367,7 @@ class kSchurFunctions_t(kSchurFunctions_generic):
         zero = s(0)
 
         if n == 0:
-            p = sage.combinat.partition.Partition_class([])
+            p = sage.combinat.partition.Partition([])
             self._self_to_s_cache[0] = {p: {p:R(1)}}
             return
         else:

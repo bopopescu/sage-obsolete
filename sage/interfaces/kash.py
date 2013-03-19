@@ -122,7 +122,7 @@ session itself.
 
 Use ``a.name()`` to get the name of the KASH variable::
 
-    sage: a.name()                                 # somewhat random and optional - kash
+    sage: a.name()                                 # somewhat random; optional - kash
     'sage0'
     sage: kash(a.name())                           # optional -- kash
     32233
@@ -558,7 +558,7 @@ class Kash(Expect):
 ##         Return help on KASH commands.
 
 ##         EXAMPLES:
-##             sage: X = kash.help('IntegerRing')   # needs optional kash package
+##             sage: X = kash.help('IntegerRing')   # optional - kash
 
 ##         """
 ##         if name is None:
@@ -599,11 +599,6 @@ class Kash(Expect):
             print self.eval(name)
         else:
             print self.eval('?%s'%name)
-
-        #if name is None:
-        #    return "The Kash manual is installed in %s/local/lib/kash/html"%os.environ['SAGE_ROOT']
-        #V = self.eval('?%s'%name)
-        #return self._doc(V)
 
     def _doc(self, V):
         if V.lstrip()[:11] == 'No matches.':

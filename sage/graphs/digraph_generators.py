@@ -10,6 +10,7 @@ Generators for common digraphs.
 
     :meth:`~DiGraphGenerators.ButterflyGraph`      | Returns a n-dimensional butterfly graph.
     :meth:`~DiGraphGenerators.Circuit`             | Returns the circuit on `n` vertices.
+    :meth:`~DiGraphGenerators.Circulant`           | Returns a circulant digraph on `n` vertices from a set of integers.
     :meth:`~DiGraphGenerators.DeBruijn`            | Returns the De Bruijn digraph with parameters `k,n`.
     :meth:`~DiGraphGenerators.GeneralizedDeBruijn` | Returns the generalized de Bruijn digraph of order `n` and degree `d`.
     :meth:`~DiGraphGenerators.ImaseItoh`           | Returns the digraph of Imase and Itoh of order `n` and degree `d`.
@@ -381,6 +382,59 @@ class DiGraphGenerators():
             g.add_edges([(i,i+1) for i in xrange(n-1)])
             g.add_edge(n-1,0)
             return g
+
+    def Circulant(self,n,integers):
+        r"""
+        Returns a circulant digraph on `n` vertices from a set of integers.
+
+        INPUT:
+
+        - ``n`` (integer) -- number of vertices.
+
+        - ``integers`` -- the list of integers such that there is an edge from
+          `i` to `j` if and only if ``(j-i)%n in integers``.
+
+        EXAMPLE::
+
+            sage: digraphs.Circulant(13,[3,5,7])
+            Circulant graph ([3, 5, 7]): Digraph on 13 vertices
+
+        TESTS::
+
+            sage: digraphs.Circulant(13,[3,5,7,"hey"])
+            Traceback (most recent call last):
+            ...
+            ValueError: The list must contain only relative integers.
+            sage: digraphs.Circulant(-2,[3,5,7,3])
+            Traceback (most recent call last):
+            ...
+            ValueError: n must be a positive integer
+            sage: digraphs.Circulant(3,[3,5,7,3.4])
+            Traceback (most recent call last):
+            ...
+            ValueError: The list must contain only relative integers.
+        """
+        from sage.graphs.graph_plot import _circle_embedding
+        from sage.rings.integer_ring import ZZ
+
+        # Bad input and loops
+        loops = False
+        if not n in ZZ or n <= 0:
+            raise ValueError("n must be a positive integer")
+
+        for i in integers:
+            if not i in ZZ:
+                raise ValueError("The list must contain only relative integers.")
+            if (i%n) == 0:
+                loops = True
+
+        G=DiGraph(n, name="Circulant graph ("+str(integers)+")", loops=loops)
+
+        _circle_embedding(G, range(n))
+        for v in range(n):
+            G.add_edges([(v,(v+j)%n) for j in integers])
+
+        return G
 
     def DeBruijn(self, k, n, vertices = 'strings'):
         r"""

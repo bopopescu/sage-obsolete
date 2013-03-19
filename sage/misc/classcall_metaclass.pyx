@@ -70,7 +70,7 @@ cdef class ClasscallMetaclass(NestedClassMetaclass):
     TESTS::
 
         sage: PerfectMatchings(2).list()
-        [PerfectMatching [(2, 1)]]
+        [[(1, 2)]]
 
     .. note::
 
@@ -233,7 +233,7 @@ cdef class ClasscallMetaclass(NestedClassMetaclass):
 
         instead of::
 
-            sage: isinstance(x, sage.combinat.partition.Partition_class)
+            sage: isinstance(x, sage.combinat.partition.Partition)
             True
 
         Another difference is that ``__classcall__`` is inherited by

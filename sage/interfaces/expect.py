@@ -393,7 +393,7 @@ If this all works, you can then make calls like:
         #the current logfile is None, then set the logfile to be one
         #in .sage/pexpect_logs/
         if self.__logfile is None and 'SAGE_PEXPECT_LOG' in os.environ:
-            from sage.misc.all import DOT_SAGE
+            from sage.env import DOT_SAGE
             logs = '%s/pexpect_logs'%DOT_SAGE
             sage_makedirs(logs)
 
@@ -621,7 +621,7 @@ If this all works, you can then make calls like:
             sage: f = open(filename, 'w')
             sage: f.write('x = 2\n')
             sage: f.close()
-            sage: octave.read(filename)  #optional -- requires Octave
+            sage: octave.read(filename)  # optional - octave
             sage: octave.get('x')        #optional
             ' 2'
             sage: import os

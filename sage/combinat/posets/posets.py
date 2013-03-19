@@ -41,6 +41,7 @@ This module implements finite partialy ordered sets. It defines :
     :meth:`~FinitePoset.interval` | Returns a list of the elements `z` such that `x \le z \le y`.
     :meth:`~FinitePoset.is_bounded` | Returns True if the poset contains a unique maximal element and a unique minimal element, and False otherwise.
     :meth:`~FinitePoset.is_chain` | Returns True if the poset is totally ordered, and False otherwise.
+    :meth:`~FinitePoset.is_EL_labelling` | Returns whether ``f`` is an EL labelling of ``self``
     :meth:`~FinitePoset.is_gequal` | Returns ``True`` if `x` is greater than or equal to `y` in the poset, and ``False`` otherwise.
     :meth:`~FinitePoset.is_graded` | Returns whether this poset is graded.
     :meth:`~FinitePoset.is_greater_than` | Returns ``True`` if `x` is greater than but not equal to `y` in the poset, and ``False`` otherwise.
@@ -1794,6 +1795,63 @@ class FinitePoset(UniqueRepresentation, Parent):
             False
         """
         return self._hasse_diagram.is_chain()
+
+    def is_EL_labelling(self, f, return_raising_chains=False):
+        r"""
+        Returns ``True`` if ``f`` is an EL labelling of ``self``.
+
+        A labelling `f` of the edges of the Hasse diagram of a poset
+        is called an EL labelling (edge lexicographic labelling) if
+        for any two elements `u` and `v` with `u \leq v`,
+
+            - there is a unique `f`-raising chain from `u` to `v` in
+              the Hasse diagram, and this chain is lexicographically
+              first among all chains from `u` to `v`.
+
+        For more details, see [Bj1980]_.
+
+        INPUT:
+
+        - ``f`` -- a function taking two elements ``a`` and ``b`` in
+          ``self`` such that ``b`` covers ``a`` and returning elements
+          in a totally ordered set.
+
+        - ``return_raising_chains`` (optional; default:``False``) if
+          ``True``, returns the set of all raising chains in ``self``,
+          if possible.
+
+        EXAMPLES:
+
+        Let us consider a Boolean poset::
+
+            sage: P = Poset([[(0,0),(0,1),(1,0),(1,1)],[[(0,0),(0,1)],[(0,0),(1,0)],[(0,1),(1,1)],[(1,0),(1,1)]]],facade=True)
+            sage: label = lambda a,b: min( i for i in [0,1] if a[i] != b[i] )
+            sage: P.is_EL_labelling(label)
+            True
+            sage: P.is_EL_labelling(label,return_raising_chains=True)
+            {((0, 0), (0, 1)): [1], ((0, 0), (1, 0)): [0], ((0, 1), (1, 1)): [0], ((1, 0), (1, 1)): [1], ((0, 0), (1, 1)): [0, 1]}
+
+        REFERENCES:
+
+            .. [Bj1980] Anders Björner,
+               *Shellable and Cohen-Macaulay partially ordered sets*,
+               Trans. Amer. Math. Soc. 260 (1980), 159-183,
+               :doi:`10.1090/S0002-9947-1980-0570784-2`
+        """
+        label_dict = { (a,b):f(a,b) for a,b in self.cover_relations_iterator() }
+        if return_raising_chains:
+            raising_chains = {}
+        for a,b in self.interval_iterator():
+            P = self.subposet(self.interval(a,b))
+            max_chains = sorted( [ [ label_dict[(chain[i],chain[i+1])] for i in range(len(chain)-1) ] for chain in P.maximal_chains() ] )
+            if max_chains[0] != sorted(max_chains[0]) or any( max_chains[i] == sorted(max_chains[i]) for i in range(1,len(max_chains)) ):
+                return False
+            elif return_raising_chains:
+                raising_chains[(a,b)] = max_chains[0]
+        if return_raising_chains:
+            return raising_chains
+        else:
+            return True
     
     def rank_function(self):
         r"""
@@ -2427,6 +2485,19 @@ class FinitePoset(UniqueRepresentation, Parent):
             True
         """
         return Poset(self._hasse_diagram.cartesian_product(other._hasse_diagram),cover_relations=True)
+
+    def interval_iterator(self):
+        """
+        Returns an iterator over all pairs `x<y` in ``self``.
+
+        EXAMPLES::
+
+            sage: list(Posets.PentagonPoset().interval_iterator())
+            [[0, 1], [0, 2], [0, 3], [0, 4], [1, 4], [2, 3], [2, 4], [3, 4]]
+
+        .. seealso:: :meth:`maximal_chains`, :meth:`chains`
+        """
+        return self.chains().elements_of_depth_iterator(2)
 
     def dual(self):
         """
