@@ -1,8 +1,7 @@
-#from sage.libs.flint.fmpz_poly cimport fmpz_poly_t
+include "../../ext/cdefs.pxi"
 include "../../libs/flint/fmpz_poly.pxi"
 
-include "../../ext/cdefs.pxi"
-
+from sage.libs.pari.gen cimport gen as pari_gen
 ctypedef fmpz_poly_t celement
 
 include "CR_template_header.pxi"
