@@ -9558,3 +9558,6 @@ sage/rings/real_mpfi.h
 sage/rings/universal_cyclotomic_field/universal_cyclotomic_field_c.c
 doc/en/reference/*/sage
 doc/en/reference/*/sagenb
+sage/combinat/q_bernoulli.c
+sage/ext/pselect.c
+sage/misc/fast_methods.c
