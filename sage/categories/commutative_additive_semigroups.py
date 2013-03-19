@@ -74,7 +74,7 @@ class CommutativeAdditiveSemigroups(Category_singleton):
             tester = self._tester(**options)
             S = tester.some_elements()
             from sage.combinat.cartesian_product import CartesianProduct
-            for x,y,z in tester.some_elements(CartesianProduct(S,S,S))
+            for x,y,z in tester.some_elements(CartesianProduct(S,S,S)):
                 tester.assert_((x + y) + z == x + (y + z))
 
         def summation(self, x, y):
