@@ -9561,3 +9561,6 @@ doc/en/reference/*/sagenb
 sage/combinat/q_bernoulli.c
 sage/ext/pselect.c
 sage/misc/fast_methods.c
+sage/rings/fraction_field_FpT.cpp
+sage/rings/padics/common_conversion.c
+sage/rings/polynomial/polynomial_zmod_flint.cpp
