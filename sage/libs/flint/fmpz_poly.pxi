@@ -24,7 +24,9 @@ cdef extern from "flint/fmpz_poly.h":
     long fmpz_poly_degree(fmpz_poly_t poly)
     unsigned long fmpz_poly_length(fmpz_poly_t poly)
 
-    
+    int fmpz_poly_is_one(fmpz_poly_t op)
+    int fmpz_poly_is_zero(fmpz_poly_t op)
+
     void fmpz_poly_set_length(fmpz_poly_t poly, unsigned long length)
     void fmpz_poly_truncate(fmpz_poly_t poly, unsigned long length)
 
