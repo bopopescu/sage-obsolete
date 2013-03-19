@@ -109,10 +109,12 @@ AUTHORS:
 """
 
 #*****************************************************************************
-#       Copyright (C) 2008 David Roe <roed@math.harvard.edu>
+#       Copyright (C) 2008 David Roe <roed.math@gmail.com>
 #                          William Stein <wstein@gmail.com>
 #
 #  Distributed under the terms of the GNU General Public License (GPL)
+#  as published by the Free Software Foundation; either version 2 of
+#  the License, or (at your option) any later version.
 #
 #                  http://www.gnu.org/licenses/
 #*****************************************************************************
@@ -127,7 +129,6 @@ from sage.rings.polynomial.polynomial_ring_constructor import PolynomialRing
 from sage.rings.integer_ring import ZZ
 from sage.rings.integer cimport Integer
 from sage.rings.padics.padic_generic_element cimport pAdicGenericElement
-from sage.rings.padics.padic_base_generic_element cimport pAdicBaseGenericElement
 from sage.rings.padics.padic_ext_element cimport pAdicExtElement
 from sage.libs.ntl.ntl_ZZ_pX cimport ntl_ZZ_pX
 from sage.libs.ntl.ntl_ZZX cimport ntl_ZZX
@@ -184,14 +185,12 @@ cdef class pAdicZZpXFMElement(pAdicZZpXElement):
         if PY_TYPE_CHECK(x, pAdicGenericElement):
             if x.valuation() < 0:
                 raise ValueError, "element has negative valuation"
+            if x._is_base_elt(self.prime_pow.prime):
+                xlift = <Integer>x.lift()
+                self._set_from_mpz(xlift.value)
+                return
             if parent.prime() != x.parent().prime():
                 raise TypeError, "Cannot coerce between p-adic parents with different primes."
-        if PY_TYPE_CHECK(x, pAdicBaseGenericElement):
-            mpz_init(tmp)
-            (<pAdicBaseGenericElement>x)._set_mpz_into(tmp)
-            self._set_from_mpz(tmp)
-            mpz_clear(tmp)
-            return
         if isinstance(x, pari_gen):
             if x.type() == "t_PADIC":
                 if x.variable() != self.prime_pow.prime:
@@ -1069,7 +1068,7 @@ cdef class pAdicZZpXFMElement(pAdicZZpXElement):
 #         multiplication by self on the power basis, where we view the
 #         parent field as a field over base.
 
-#         INPUT::
+#         INPUT:
         
 #             base -- field or morphism
 #         """
@@ -1368,16 +1367,18 @@ cdef class pAdicZZpXFMElement(pAdicZZpXElement):
                 self.prime_pow.eis_shift(&u.value, &u.value, 1, self.prime_pow.ram_prec_cap)
         return L
 
-    def _teichmuller_set(self):
+    def _teichmuller_set_unsafe(self):
         """
-        Sets ``self`` to the teichmuller representative congruent to
-        ``self`` modulo `\pi`.
+        Sets this element to the Teichmuller representative with the
+        same residue.
 
-        This function should not be used externally: elements are
-        supposed to be immutable.
-                
+        .. WARNING::
+
+            This function modifies the element, which is not safe.
+            Elements are supposed to be immutable.
+
         EXAMPLES::
-        
+
             sage: R = ZpFM(5,5)
             sage: S.<x> = R[]
             sage: f = x^5 + 75*x^3 - 15*x^2 +125*x - 5
@@ -1409,12 +1410,12 @@ cdef class pAdicZZpXFMElement(pAdicZZpXElement):
 #         only if (p-1) divides the ramification index (see the
 #         documentation on __pow__).
 
-#         INPUT::
+#         INPUT:
         
 #             - self -- a p-adic element
 #             - prec -- an integer
             
-#         OUTPUT::
+#         OUTPUT:
         
 #             - integer -- the multiplicative order of self
 #         """
