@@ -1,4 +1,5 @@
 include "../../ext/cdefs.pxi"
+include "../../ext/interrupt.pxi"
 include "../../libs/flint/fmpz.pxi"
 include "../../libs/flint/fmpz_poly.pxi"
 include "../../libs/flint/padic.pxi"
