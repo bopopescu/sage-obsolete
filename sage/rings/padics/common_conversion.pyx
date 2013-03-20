@@ -90,8 +90,8 @@ cdef long get_ordp(x, PowComputer_class prime_pow) except? -10000:
                 k += 1
                 n = n / p
         else:
-            x = Integer(x)
-    if PY_TYPE_CHECK(x, Integer):
+            return get_ordp(Integer(x), prime_pow)
+    elif PY_TYPE_CHECK(x, Integer):
         if mpz_sgn((<Integer>x).value) == 0:
             return maxordp
         k = mpz_remove(temp.value, (<Integer>x).value, prime_pow.prime.value)
@@ -377,9 +377,11 @@ cdef inline int cconv_shared(mpz_t out, x, long prec, long valshift, PowComputer
 
     - ``prime_pow`` -- a PowComputer for the ring.
     """
-    if PY_TYPE_CHECK(x, pari_gen):
+    if PyInt_Check(x):
+        x = Integer(x)
+    elif PY_TYPE_CHECK(x, pari_gen):
         x = x.sage()
-    if PY_TYPE_CHECK(x, pAdicGenericElement) or sage.rings.finite_rings.integer_mod.is_IntegerMod(x):
+    elif PY_TYPE_CHECK(x, pAdicGenericElement) or sage.rings.finite_rings.integer_mod.is_IntegerMod(x):
         x = x.lift()
     if PY_TYPE_CHECK(x, Integer):
         if valshift > 0:
