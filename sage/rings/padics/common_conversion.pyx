@@ -41,6 +41,7 @@ include "../../libs/pari/decl.pxi"
 include "../../ext/stdsage.pxi"
 include "../../ext/python_list.pxi"
 include "../../ext/python_tuple.pxi"
+include "../../ext/gmp.pxi"
 
 cdef long get_ordp(x, PowComputer_class prime_pow) except? -10000:
     """
