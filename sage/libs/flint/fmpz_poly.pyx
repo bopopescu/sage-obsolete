@@ -1,7 +1,7 @@
 """
 FLINT fmpz_poly class wrapper
 
-AUTHORS: 
+AUTHORS:
 
 - Robert Bradshaw (2007-09-15) Initial version.
 - William Stein (2007-10-02) update for new flint; add arithmetic and creation
@@ -29,6 +29,7 @@ include "../../ext/python_sequence.pxi"
 
 from sage.structure.sage_object cimport SageObject
 from sage.rings.integer cimport Integer
+from sage.libs.flint.fmpz_poly cimport *
 
 cdef class Fmpz_poly(SageObject):
     

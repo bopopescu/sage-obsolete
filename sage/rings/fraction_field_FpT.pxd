@@ -1,5 +1,5 @@
 
-from sage.libs.flint.zmod_poly cimport *
+from sage.libs.flint.nmod_poly cimport *
 
 from sage.rings.morphism cimport RingHomomorphism_coercion
 from sage.categories.morphism cimport Morphism

@@ -1,6 +1,6 @@
 include "../../ext/cdefs.pxi"
-include "../../libs/flint/fmpz.pxi"
-include "../../libs/flint/fmpz_poly.pxi"
+
+from sage.libs.flint.fmpz_poly cimport fmpz_poly_t
 
 import sage.structure.element
 cimport sage.structure.element

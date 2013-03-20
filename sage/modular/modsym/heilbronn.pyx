@@ -25,7 +25,7 @@ include '../../ext/cdefs.pxi'
 include '../../ext/interrupt.pxi'
 include '../../ext/stdsage.pxi'
 from sage.libs.flint.flint cimport *
-include "../../libs/flint/fmpz_poly.pxi"
+from sage.libs.flint.fmpz_poly cimport *
 
 cdef extern from "<math.h>":
     float roundf(float x)

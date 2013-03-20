@@ -6,15 +6,15 @@ include "../../../ext/stdsage.pxi"
 include "../../../ext/interrupt.pxi"
 include "../../../ext/python_list.pxi"
 
-include "../../flint/fmpz_poly.pxi"
-include "../../flint/fmpz_mod_poly.pxi"
-
 from sage.rings.padics.common_conversion cimport cconv_mpz_t_out_shared, cconv_mpz_t_shared, cconv_mpq_t_out_shared, cconv_mpq_t_shared, cconv_shared
 
 from sage.rings.integer cimport Integer
 from sage.rings.rational cimport Rational
 from sage.rings.padics.padic_generic_element cimport pAdicGenericElement
 import sage.rings.finite_rings.integer_mod
+
+from sage.libs.flint.fmpz cimport *
+from sage.libs.flint.fmpz_poly cimport *
 
 cdef inline int cconstruct(celement value, PowComputer_ prime_pow) except -1:
     """
@@ -208,6 +208,8 @@ cdef inline long cvaluation(celement a, long prec, PowComputer_ prime_pow) excep
     cdef long i
     for i from 0 <= i <= fmpz_poly_degree(a):
         fmpz_poly_get_coeff_fmpz(prime_pow.ftmp, a, i)
+        if fmpz_is_zero(prime_pow.ftmp):
+            continue
         val = fmpz_remove(prime_pow.ftmp, prime_pow.ftmp, prime_pow.fprime)
         if val < ret: ret = val
     return ret
@@ -274,7 +276,7 @@ cdef inline int cshift_notrunc(celement out, celement a, long n, long prec, PowC
         fmpz_poly_scalar_mul_fmpz(out, a, prime_pow.pow_fmpz_t_tmp(n)[0])
     elif n < 0:
         sig_on()
-        fmpz_poly_scalar_divexact_fmpz(out, a, prime_pow.pow_fmpz_t_tmp(-n)[0]) # ??
+        fmpz_poly_scalar_divexact_fmpz(out, a, prime_pow.pow_fmpz_t_tmp(-n)[0])
         sig_off()
     else:
         fmpz_poly_set(out, a)
@@ -308,12 +310,22 @@ cdef inline int cinvert(celement out, celement a, long prec, PowComputer_ prime_
     - ``prec`` -- a long, the precision.
     - ``prime_pow`` -- the PowComputer for the ring.
     """
-
+    # TODO: this can probably be done faster
     sig_on()
-    fmpz_poly_realloc(out, prime_pow.deg)
-    _fmpz_poly_set_length(out, prime_pow.deg)
-    _fmpz_mod_poly_invmod(fmpz_poly_get_coeff_ptr(out, 0), fmpz_poly_get_coeff_ptr(a, 0), fmpz_poly_degree(a)+1, fmpz_poly_get_coeff_ptr(prime_pow.get_modulus(prec)[0], 0), prime_pow.deg+1, prime_pow.pow_fmpz_t_tmp(prec)[0])
-    _fmpz_poly_normalise(out)
+    fmpz_poly_set(prime_pow.tmp_poly2, prime_pow.get_modulus(prec)[0])
+    fmpz_poly_primitive_part(prime_pow.tmp_poly2, prime_pow.tmp_poly2)
+
+    fmpz_poly_content(prime_pow.ftmp2, a)
+    fmpz_poly_scalar_divexact_fmpz(out, a, prime_pow.ftmp2)
+
+    fmpz_poly_xgcd(prime_pow.ftmp, out, prime_pow.tmp_poly, out, prime_pow.tmp_poly2)
+    if fmpz_is_zero(prime_pow.ftmp): raise ValueError("polynomials are not coprime")
+
+    fmpz_mul(prime_pow.ftmp2, prime_pow.ftmp, prime_pow.ftmp2)
+    if not fmpz_invmod(prime_pow.ftmp2, prime_pow.ftmp2, prime_pow.pow_fmpz_t_tmp(prec)[0]): raise ValueError("content or xgcd is not a unit")
+    fmpz_poly_scalar_mul_fmpz(out, out, prime_pow.ftmp2)
+
+    creduce(out, out, prec, prime_pow)
     sig_off()
 
 cdef inline int cmul(celement out, celement a, celement b, long prec, PowComputer_ prime_pow) except -1:
@@ -517,12 +529,13 @@ cdef clist(celement a, long prec, bint pos, PowComputer_ prime_pow):
         j = 0
         while True:
             if fmpz_is_zero(prime_pow.ftmp): break
-            if len(ret) <= j: ret.append([])
-            while len(ret[j]) <= i: ret[j].append(0)
             digit = PY_NEW(Integer)
             fmpz_fdiv_qr(prime_pow.ftmp, prime_pow.ftmp2, prime_pow.ftmp, prime_pow.fprime)
-            fmpz_get_mpz(digit.value, prime_pow.ftmp2)
-            ret[j][i] =digit
+            if not fmpz_is_zero(prime_pow.ftmp2):
+                while len(ret) <= j: ret.append([])
+                while len(ret[j]) <= i: ret[j].append(0)
+                fmpz_get_mpz(digit.value, prime_pow.ftmp2)
+                ret[j][i] =digit
             j += 1
     return ret
 
