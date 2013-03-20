@@ -6,14 +6,15 @@ include "../../../ext/stdsage.pxi"
 include "../../../ext/interrupt.pxi"
 include "../../../ext/python_list.pxi"
 
-include "../../flint/fmpz_poly.pxi"
-
 from sage.rings.padics.common_conversion cimport cconv_mpz_t_out_shared, cconv_mpz_t_shared, cconv_mpq_t_out_shared, cconv_mpq_t_shared, cconv_shared
 
 from sage.rings.integer cimport Integer
 from sage.rings.rational cimport Rational
 from sage.rings.padics.padic_generic_element cimport pAdicGenericElement
 import sage.rings.finite_rings.integer_mod
+
+from sage.libs.flint.fmpz cimport *
+from sage.libs.flint.fmpz_poly cimport *
 
 cdef inline int cconstruct(celement value, PowComputer_ prime_pow) except -1:
     """

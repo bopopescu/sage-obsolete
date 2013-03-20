@@ -8,7 +8,7 @@ include "../ext/interrupt.pxi"
 include "../ext/stdsage.pxi"
 
 from sage.rings.all import GF
-from sage.libs.flint.zmod_poly cimport *
+from sage.libs.flint.nmod_poly cimport *
 from sage.structure.element cimport Element, ModuleElement, RingElement
 from sage.rings.integer_ring import ZZ
 from sage.rings.fraction_field import FractionField_generic, FractionField_1poly_field

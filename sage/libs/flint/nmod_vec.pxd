@@ -7,8 +7,8 @@
 #  the License, or (at your option) any later version.
 #                  http://www.gnu.org/licenses/
 #*****************************************************************************
-
-from sage.libs.flint.flint cimport flint_rand_t
+from sage.libs.flint.flint cimport *
+from sage.libs.flint.fmpz cimport *
 
 cdef extern from "flint/nmod_vec.h":
     ctypedef unsigned long mp_bitcnt_t

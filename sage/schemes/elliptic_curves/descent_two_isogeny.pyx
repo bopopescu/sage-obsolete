@@ -22,10 +22,10 @@ from sage.rings.integer cimport Integer
 
 include "../../ext/cdefs.pxi"
 include "../../ext/interrupt.pxi"
-include "../../libs/flint/fmpz_poly.pxi"
 
-from sage.libs.flint.zmod_poly cimport *, nmod_poly_t
-from sage.libs.flint.ulong_extras cimport *, n_factor_t
+from sage.libs.flint.nmod_poly cimport *
+from sage.libs.flint.ulong_extras cimport *
+from sage.libs.flint.fmpz_poly cimport *
 from sage.libs.ratpoints cimport ratpoints_mpz_exists_only
 
 cdef int N_RES_CLASSES_BSD = 10

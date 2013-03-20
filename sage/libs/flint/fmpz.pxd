@@ -8,7 +8,9 @@
 #                  http://www.gnu.org/licenses/
 #*****************************************************************************
 include "../ntl/decl.pxi"
-include "nmod_vec.pxi"
+
+from sage.libs.flint.nmod_poly cimport *
+from sage.libs.flint.flint cimport *
 
 cdef extern from "flint/fmpz.h":
     ctypedef long fmpz

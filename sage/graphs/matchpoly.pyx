@@ -34,11 +34,11 @@ Methods
 from sage.rings.integer_ring import ZZ
 from sage.rings.integer cimport Integer
 from sage.misc.misc import prod
+from sage.libs.flint.fmpz_poly cimport *
+from sage.libs.flint.fmpz cimport fmpz
 include '../ext/interrupt.pxi'
 include '../ext/cdefs.pxi'
 include '../ext/stdsage.pxi'
-include '../libs/flint/fmpz.pxi'
-include '../libs/flint/fmpz_poly.pxi'
 
 R = ZZ['x']
 x = R.gen()
