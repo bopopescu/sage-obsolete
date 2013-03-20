@@ -7,7 +7,6 @@ include "../../../ext/interrupt.pxi"
 include "../../../ext/python_list.pxi"
 
 include "../../flint/fmpz_poly.pxi"
-include "../../flint/fmpz_mod_poly.pxi"
 
 from sage.rings.padics.common_conversion cimport cconv_mpz_t_out_shared, cconv_mpz_t_shared, cconv_mpq_t_out_shared, cconv_mpq_t_shared, cconv_shared
 
