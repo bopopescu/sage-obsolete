@@ -9,7 +9,6 @@ include "../../../ext/python_list.pxi"
 include "../../flint/fmpz_poly.pxi"
 include "../../flint/fmpz_mod_poly.pxi"
 
-from sage.rings.padics.pow_computer_flint cimport PowComputer_flint_unram
 from sage.rings.padics.common_conversion cimport cconv_mpz_t_out_shared, cconv_mpz_t_shared, cconv_mpq_t_out_shared, cconv_mpq_t_shared, cconv_shared
 
 from sage.rings.integer cimport Integer
@@ -17,7 +16,7 @@ from sage.rings.rational cimport Rational
 from sage.rings.padics.padic_generic_element cimport pAdicGenericElement
 import sage.rings.finite_rings.integer_mod
 
-cdef inline int cconstruct(celement value, PowComputer_class prime_pow) except -1:
+cdef inline int cconstruct(celement value, PowComputer_ prime_pow) except -1:
     """
     Construct a new element.
 
@@ -28,7 +27,7 @@ cdef inline int cconstruct(celement value, PowComputer_class prime_pow) except -
     """
     fmpz_poly_init(value)
 
-cdef inline int cdestruct(celement value, PowComputer_class prime_pow) except -1:
+cdef inline int cdestruct(celement value, PowComputer_ prime_pow) except -1:
     """
     Deallocate an element.
 
@@ -39,7 +38,7 @@ cdef inline int cdestruct(celement value, PowComputer_class prime_pow) except -1
     """
     fmpz_poly_clear(value)
 
-cdef inline int ccmp(celement a, celement b, long prec, bint reduce_a, bint reduce_b, PowComputer_class prime_pow_) except -2:
+cdef inline int ccmp(celement a, celement b, long prec, bint reduce_a, bint reduce_b, PowComputer_ prime_pow) except -2:
     """
     Comparison of two elements.
 
@@ -60,7 +59,6 @@ cdef inline int ccmp(celement a, celement b, long prec, bint reduce_a, bint redu
     - If at least one needs to be reduced, returns
       0 (if ``a == b mod p^prec``) or 1 (otherwise)
     """
-    cdef PowComputer_flint_unram prime_pow = <PowComputer_flint_unram>prime_pow_
     cdef long cmp
 
     if reduce_a or reduce_b:
@@ -81,7 +79,7 @@ cdef inline int ccmp(celement a, celement b, long prec, bint reduce_a, bint redu
         elif cmp > 0: return 1
     return 0
 
-cdef inline int cneg(celement out, celement a, long prec, PowComputer_class prime_pow) except -1:
+cdef inline int cneg(celement out, celement a, long prec, PowComputer_ prime_pow) except -1:
     """
     Negation
 
@@ -96,7 +94,7 @@ cdef inline int cneg(celement out, celement a, long prec, PowComputer_class prim
     """
     fmpz_poly_neg(out, a)
 
-cdef inline int cadd(celement out, celement a, celement b, long prec, PowComputer_class prime_pow) except -1:
+cdef inline int cadd(celement out, celement a, celement b, long prec, PowComputer_ prime_pow) except -1:
     """
     Addition
 
@@ -112,7 +110,7 @@ cdef inline int cadd(celement out, celement a, celement b, long prec, PowCompute
     """
     fmpz_poly_add(out, a, b)
 
-cdef inline bint creduce(celement out, celement a, long prec, PowComputer_class prime_pow_) except -1:
+cdef inline bint creduce(celement out, celement a, long prec, PowComputer_ prime_pow) except -1:
     """
     Reduce modulo a power of the maximal ideal.
 
@@ -127,14 +125,13 @@ cdef inline bint creduce(celement out, celement a, long prec, PowComputer_class 
 
     - returns True if the reduction is zero; False otherwise.
     """
-    cdef PowComputer_flint_unram prime_pow = <PowComputer_flint_unram>prime_pow_
     sig_on()
     fmpz_poly_divrem(prime_pow.tmp_poly, out, a, prime_pow.get_modulus(prec)[0])
     fmpz_poly_scalar_mod_fmpz(out, out, prime_pow.pow_fmpz_t_tmp(prec)[0])
     sig_off()
     return ciszero(out, prime_pow)
 
-cdef inline bint creduce_small(celement out, celement a, long prec, PowComputer_class prime_pow) except -1:
+cdef inline bint creduce_small(celement out, celement a, long prec, PowComputer_ prime_pow) except -1:
     """
     Reduce modulo a power of the maximal ideal.
 
@@ -155,7 +152,7 @@ cdef inline bint creduce_small(celement out, celement a, long prec, PowComputer_
     """
     return creduce(out, a, prec, prime_pow)
 
-cdef inline long cremove(celement out, celement a, long prec, PowComputer_class prime_pow) except -1:
+cdef inline long cremove(celement out, celement a, long prec, PowComputer_ prime_pow) except -1:
     """
     Extract the maximum power of the uniformizer dividing this element.
 
@@ -179,7 +176,7 @@ cdef inline long cremove(celement out, celement a, long prec, PowComputer_class 
     sig_off()
     return ret
 
-cdef inline long cvaluation(celement a, long prec, PowComputer_class prime_pow_) except -1:
+cdef inline long cvaluation(celement a, long prec, PowComputer_ prime_pow) except -1:
     """
     Returns the maximum power of the uniformizer dividing this
     element.
@@ -198,7 +195,6 @@ cdef inline long cvaluation(celement a, long prec, PowComputer_class prime_pow_)
     - if `a = 0`, returns prec.  Otherwise, returns the number of
       times p divides a.
     """
-    cdef PowComputer_flint_unram prime_pow = <PowComputer_flint_unram>prime_pow_
     if ciszero(a, prime_pow):
         return prec
     cdef long ret = maxordp
@@ -211,7 +207,7 @@ cdef inline long cvaluation(celement a, long prec, PowComputer_class prime_pow_)
         if val < ret: ret = val
     return ret
 
-cdef inline bint cisunit(celement a, PowComputer_class prime_pow_) except -1:
+cdef inline bint cisunit(celement a, PowComputer_ prime_pow) except -1:
     """
     Returns whether this element has valuation zero.
 
@@ -224,11 +220,10 @@ cdef inline bint cisunit(celement a, PowComputer_class prime_pow_) except -1:
 
     - returns True if `a` has valuation 0, and False otherwise.
     """
-    cdef PowComputer_flint_unram prime_pow = <PowComputer_flint_unram>prime_pow_
     fmpz_poly_scalar_mod_fmpz(prime_pow.tmp_poly, a, prime_pow.fprime)
     return ciszero(prime_pow.tmp_poly, prime_pow)
 
-cdef inline int cshift(celement out, celement a, long n, long prec, PowComputer_class prime_pow_, bint reduce_afterward) except -1:
+cdef inline int cshift(celement out, celement a, long n, long prec, PowComputer_ prime_pow, bint reduce_afterward) except -1:
     """
     Mulitplies by a power of the uniformizer.
 
@@ -243,7 +238,6 @@ cdef inline int cshift(celement out, celement a, long n, long prec, PowComputer_
     - ``prime_pow`` -- the PowComputer for the ring.
     - ``reduce_afterward`` -- whether to reduce afterward.
     """
-    cdef PowComputer_flint_unram prime_pow = <PowComputer_flint_unram>prime_pow_
     if n > 0:
         fmpz_poly_scalar_mul_fmpz(out, a, prime_pow.pow_fmpz_t_tmp(n)[0])
     elif n < 0:
@@ -255,7 +249,7 @@ cdef inline int cshift(celement out, celement a, long n, long prec, PowComputer_
     if reduce_afterward:
         creduce(out, out, prec, prime_pow)
 
-cdef inline int cshift_notrunc(celement out, celement a, long n, long prec, PowComputer_class prime_pow_) except -1:
+cdef inline int cshift_notrunc(celement out, celement a, long n, long prec, PowComputer_ prime_pow) except -1:
     """
     Mulitplies by a power of the uniformizer, assuming that the
     valuation of a is at least -n.
@@ -271,7 +265,6 @@ cdef inline int cshift_notrunc(celement out, celement a, long n, long prec, PowC
     - ``prec`` -- long, a precision modulo which to reduce.
     - ``prime_pow`` -- the PowComputer for the ring.
     """
-    cdef PowComputer_flint_unram prime_pow = <PowComputer_flint_unram>prime_pow_
     if n > 0:
         fmpz_poly_scalar_mul_fmpz(out, a, prime_pow.pow_fmpz_t_tmp(n)[0])
     elif n < 0:
@@ -281,7 +274,7 @@ cdef inline int cshift_notrunc(celement out, celement a, long n, long prec, PowC
     else:
         fmpz_poly_set(out, a)
 
-cdef inline int csub(celement out, celement a, celement b, long prec, PowComputer_class prime_pow) except -1:
+cdef inline int csub(celement out, celement a, celement b, long prec, PowComputer_ prime_pow) except -1:
     """
     Subtraction.
 
@@ -297,7 +290,7 @@ cdef inline int csub(celement out, celement a, celement b, long prec, PowCompute
     """
     fmpz_poly_sub(out, a, b)
 
-cdef inline int cinvert(celement out, celement a, long prec, PowComputer_class prime_pow_) except -1:
+cdef inline int cinvert(celement out, celement a, long prec, PowComputer_ prime_pow) except -1:
     """
     Inversion
 
@@ -310,7 +303,6 @@ cdef inline int cinvert(celement out, celement a, long prec, PowComputer_class p
     - ``prec`` -- a long, the precision.
     - ``prime_pow`` -- the PowComputer for the ring.
     """
-    cdef PowComputer_flint_unram prime_pow = <PowComputer_flint_unram>prime_pow_
 
     sig_on()
     fmpz_poly_realloc(out, prime_pow.deg)
@@ -319,7 +311,7 @@ cdef inline int cinvert(celement out, celement a, long prec, PowComputer_class p
     _fmpz_poly_normalise(out)
     sig_off()
 
-cdef inline int cmul(celement out, celement a, celement b, long prec, PowComputer_class prime_pow) except -1:
+cdef inline int cmul(celement out, celement a, celement b, long prec, PowComputer_ prime_pow) except -1:
     """
     Multiplication.
 
@@ -335,7 +327,7 @@ cdef inline int cmul(celement out, celement a, celement b, long prec, PowCompute
     """
     fmpz_poly_mul(out, a, b)
 
-cdef inline int cdivunit(celement out, celement a, celement b, long prec, PowComputer_class prime_pow) except -1:
+cdef inline int cdivunit(celement out, celement a, celement b, long prec, PowComputer_ prime_pow) except -1:
     """
     Division.
 
@@ -353,7 +345,7 @@ cdef inline int cdivunit(celement out, celement a, celement b, long prec, PowCom
     cinvert(out, b, prec, prime_pow)
     cmul(out, a, b, prec, prime_pow)
 
-cdef inline int csetone(celement out, PowComputer_class prime_pow) except -1:
+cdef inline int csetone(celement out, PowComputer_ prime_pow) except -1:
     """
     Sets to 1.
 
@@ -364,7 +356,7 @@ cdef inline int csetone(celement out, PowComputer_class prime_pow) except -1:
     """
     fmpz_poly_set_ui(out, 1)
 
-cdef inline int csetzero(celement out, PowComputer_class prime_pow) except -1:
+cdef inline int csetzero(celement out, PowComputer_ prime_pow) except -1:
     """
     Sets to 0.
 
@@ -375,7 +367,7 @@ cdef inline int csetzero(celement out, PowComputer_class prime_pow) except -1:
     """
     fmpz_poly_set_ui(out, 0)
 
-cdef inline bint cisone(celement a, PowComputer_class prime_pow_) except -1:
+cdef inline bint cisone(celement a, PowComputer_ prime_pow) except -1:
     """
     Returns whether this element is equal to 1.
 
@@ -390,7 +382,7 @@ cdef inline bint cisone(celement a, PowComputer_class prime_pow_) except -1:
     """
     return fmpz_poly_is_one(a)
 
-cdef inline bint ciszero(celement a, PowComputer_class prime_pow) except -1:
+cdef inline bint ciszero(celement a, PowComputer_ prime_pow) except -1:
     """
     Returns whether this element is equal to 0.
 
@@ -405,7 +397,7 @@ cdef inline bint ciszero(celement a, PowComputer_class prime_pow) except -1:
     """
     return fmpz_poly_is_zero(a)
 
-cdef inline int cpow(celement out, celement a, mpz_t n, long prec, PowComputer_class prime_pow) except -1:
+cdef inline int cpow(celement out, celement a, mpz_t n, long prec, PowComputer_ prime_pow) except -1:
     """
     Exponentiation.
 
@@ -432,7 +424,7 @@ cdef inline int cpow(celement out, celement a, mpz_t n, long prec, PowComputer_c
 
     creduce(out, out, prec, prime_pow)
 
-cdef inline int ccopy(celement out, celement a, PowComputer_class prime_pow) except -1:
+cdef inline int ccopy(celement out, celement a, PowComputer_ prime_pow) except -1:
     """
     Copying.
 
@@ -444,7 +436,7 @@ cdef inline int ccopy(celement out, celement a, PowComputer_class prime_pow) exc
     """
     fmpz_poly_set(out, a)
 
-cdef inline cpickle(celement a, PowComputer_class prime_pow):
+cdef inline cpickle(celement a, PowComputer_ prime_pow):
     """
     Serialization into objects that Sage knows how to pickle.
 
@@ -459,7 +451,7 @@ cdef inline cpickle(celement a, PowComputer_class prime_pow):
     """
     return fmpz_poly_get_str(a).decode("UTF-8")
 
-cdef inline int cunpickle(celement out, x, PowComputer_class prime_pow) except -1:
+cdef inline int cunpickle(celement out, x, PowComputer_ prime_pow) except -1:
     """
     Reconstruction from the output of meth:`cpickle`.
 
@@ -473,7 +465,7 @@ cdef inline int cunpickle(celement out, x, PowComputer_class prime_pow) except -
     cdef char* c_str = byte_string
     fmpz_poly_set_str(out, c_str)
 
-cdef inline long chash(celement a, long ordp, long prec, PowComputer_class prime_pow) except -1:
+cdef inline long chash(celement a, long ordp, long prec, PowComputer_ prime_pow) except -1:
     """
     Hashing.
 
@@ -491,7 +483,7 @@ cdef inline long chash(celement a, long ordp, long prec, PowComputer_class prime
     fmpz_poly_get_coeff_mpz(h.value, a, 0)
     return hash(h)
 
-cdef clist(celement a, long prec, bint pos, PowComputer_class prime_pow_):
+cdef clist(celement a, long prec, bint pos, PowComputer_ prime_pow):
     """
     Returns a list of digits in the series expansion.
 
@@ -511,7 +503,6 @@ cdef clist(celement a, long prec, bint pos, PowComputer_class prime_pow_):
 
     - A list of p-adic digits `[a_0, a_1, \ldots]` so that `a = a_0 + a_1*p + \cdots` modulo `p^{prec}`.
     """
-    cdef PowComputer_flint_unram prime_pow = <PowComputer_flint_unram>prime_pow_
 
     ret = []
     cdef Integer digit
@@ -533,7 +524,7 @@ cdef clist(celement a, long prec, bint pos, PowComputer_class prime_pow_):
 # The element is filled in for zero in the output of clist if necessary.
 _list_zero = []
 
-cdef int cteichmuller(celement out, celement value, long prec, PowComputer_class prime_pow) except -1:
+cdef int cteichmuller(celement out, celement value, long prec, PowComputer_ prime_pow) except -1:
     """
     Teichmuller lifting.
 
@@ -548,7 +539,7 @@ cdef int cteichmuller(celement out, celement value, long prec, PowComputer_class
     """
     raise NotImplementedError
 
-cdef int cconv(celement out, x, long prec, long valshift, PowComputer_class prime_pow_) except -2:
+cdef int cconv(celement out, x, long prec, long valshift, PowComputer_ prime_pow) except -2:
     """
     Conversion from other Sage types.
 
@@ -566,7 +557,6 @@ cdef int cconv(celement out, x, long prec, long valshift, PowComputer_class prim
 
     - ``prime_pow`` -- a PowComputer for the ring.
     """
-    cdef PowComputer_flint_unram prime_pow = <PowComputer_flint_unram>prime_pow_
     cdef long i
     cdef long degree
 
@@ -585,7 +575,7 @@ cdef int cconv(celement out, x, long prec, long valshift, PowComputer_class prim
         cconv_shared(prime_pow.temp_m2, x, prec, valshift, prime_pow)
         fmpz_poly_set_mpz(out, prime_pow.temp_m2)
 
-cdef inline long cconv_mpq_t(celement out, celement x, long prec, bint absolute, PowComputer_class prime_pow) except? -10000:
+cdef inline long cconv_mpq_t(celement out, celement x, long prec, bint absolute, PowComputer_ prime_pow) except? -10000:
     """
     A fast pathway for conversion of rationals that doesn't require
     precomputation of the valuation.
@@ -609,7 +599,7 @@ cdef inline long cconv_mpq_t(celement out, celement x, long prec, bint absolute,
     cconv_mpq_t_shared(prime_pow.temp_m2, x, prec, absolute, prime_pow)
     fmpz_poly_set_mpz(out, prime_pow.temp_m2)
 
-cdef inline int cconv_mpq_t_out(mpq_t out, celement x, long valshift, long prec, PowComputer_class prime_pow) except -1:
+cdef inline int cconv_mpq_t_out(mpq_t out, celement x, long valshift, long prec, PowComputer_ prime_pow) except -1:
     """
     Converts the underlying `p`-adic element into a rational
 
@@ -630,7 +620,7 @@ cdef inline int cconv_mpq_t_out(mpq_t out, celement x, long valshift, long prec,
 
     cconv_mpq_t_out_shared(out, prime_pow.temp_m2, valshift, prec, prime_pow)
 
-cdef inline long cconv_mpz_t(celement out, mpz_t x, long prec, bint absolute, PowComputer_class prime_pow) except -2:
+cdef inline long cconv_mpz_t(celement out, mpz_t x, long prec, bint absolute, PowComputer_ prime_pow) except -2:
     """
     A fast pathway for conversion of integers that doesn't require
     precomputation of the valuation.
@@ -654,7 +644,7 @@ cdef inline long cconv_mpz_t(celement out, mpz_t x, long prec, bint absolute, Po
     cconv_mpz_t_shared(prime_pow.temp_m2, x, prec, absolute, prime_pow)
     fmpz_poly_set_mpz(out, prime_pow.temp_m2)
 
-cdef inline int cconv_mpz_t_out(mpz_t out, celement x, long valshift, long prec, PowComputer_class prime_pow) except -1:
+cdef inline int cconv_mpz_t_out(mpz_t out, celement x, long valshift, long prec, PowComputer_ prime_pow) except -1:
     """
     Converts the underlying `p`-adic element into an integer if
     possible.
