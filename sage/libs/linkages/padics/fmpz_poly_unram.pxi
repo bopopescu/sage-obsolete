@@ -4,6 +4,7 @@
 
 include "../../../ext/stdsage.pxi"
 include "../../../ext/interrupt.pxi"
+include "../../../ext/python_list.pxi"
 
 include "../../flint/fmpz_poly.pxi"
 include "../../flint/fmpz_mod_poly.pxi"
@@ -560,7 +561,7 @@ cdef int cconv(celement out, x, long prec, long valshift, PowComputer_class prim
 
     - ``prime_pow`` -- a PowComputer for the ring.
     """
-    if PY_TYPE_CHECK(x, list):
+    if PyList_Check(x):
         if len(x) > prime_pow.deg:
             raise ValueError
         for i from 0 <= i < prime_pow.deg:
