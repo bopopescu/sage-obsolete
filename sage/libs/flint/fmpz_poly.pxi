@@ -60,7 +60,6 @@ cdef extern from "flint/fmpz_poly.h":
     void fmpz_poly_mul_trunc_left_n(fmpz_poly_t output, fmpz_poly_t input1, \
             fmpz_poly_t input2, unsigned long trunc)
 
-#    void fmpz_poly_scalar_mul(fmpz_poly_t output, fmpz_poly_t input, fmpz_t x)
     void fmpz_poly_scalar_mul_ui(fmpz_poly_t output, fmpz_poly_t input, \
             unsigned long x)
     void fmpz_poly_scalar_mul_si(fmpz_poly_t output, fmpz_poly_t input, long x)
