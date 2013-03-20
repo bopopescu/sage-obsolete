@@ -4,11 +4,13 @@
 
 include "../../../ext/stdsage.pxi"
 include "../../../ext/interrupt.pxi"
+include "../../../ext/python_list.pxi"
 
 include "../../flint/fmpz_poly.pxi"
 include "../../flint/fmpz_mod_poly.pxi"
 
 from sage.rings.padics.pow_computer_flint cimport PowComputer_flint_unram
+from sage.rings.padics.common_conversion cimport cconv_mpz_t_out_shared, cconv_mpz_t_shared, cconv_mpq_t_out_shared, cconv_mpq_t_shared, cconv_shared
 
 from sage.rings.integer cimport Integer
 from sage.rings.rational cimport Rational
@@ -342,7 +344,8 @@ cdef inline int cdivunit(celement out, celement a, celement b, long prec, PowCom
     - ``prec`` -- a long, the precision.
     - ``prime_pow`` -- the PowComputer for the ring.
     """
-    raise NotImplementedError
+    cinvert(out, b, prec, prime_pow)
+    cmul(out, a, b, prec, prime_pow)
 
 cdef inline int csetone(celement out, PowComputer_class prime_pow) except -1:
     """
@@ -450,7 +453,7 @@ cdef inline cpickle(celement a, PowComputer_class prime_pow):
 
     - a serializable object storing ``a``.
     """
-    raise NotImplementedError
+    return fmpz_poly_get_str(a).decode("UTF-8")
 
 cdef inline int cunpickle(celement out, x, PowComputer_class prime_pow) except -1:
     """
@@ -462,7 +465,9 @@ cdef inline int cunpickle(celement out, x, PowComputer_class prime_pow) except -
     - ``x`` -- the result of `meth`:cpickle.
     - ``prime_pow`` -- the PowComputer for the ring.
     """
-    raise NotImplementedError
+    byte_string = x.encode("UTF-8")
+    cdef char* c_str = byte_string
+    fmpz_poly_set_str(out, c_str)
 
 cdef inline long chash(celement a, long ordp, long prec, PowComputer_class prime_pow) except -1:
     """
@@ -475,7 +480,12 @@ cdef inline long chash(celement a, long ordp, long prec, PowComputer_class prime
     - ``prec`` -- a long storing the precision.
     - ``prime_pow`` -- a PowComputer for the ring.
     """
-    raise NotImplementedError
+    if ciszero(a, prime_pow):
+        return 0
+
+    cdef Integer h = PY_NEW(Integer)
+    fmpz_poly_get_coeff_mpz(h.value, a, 0)
+    return hash(h)
 
 cdef clist(celement a, long prec, bint pos, PowComputer_class prime_pow_):
     """
@@ -498,6 +508,7 @@ cdef clist(celement a, long prec, bint pos, PowComputer_class prime_pow_):
     - A list of p-adic digits `[a_0, a_1, \ldots]` so that `a = a_0 + a_1*p + \cdots` modulo `p^{prec}`.
     """
     cdef PowComputer_flint_unram prime_pow = <PowComputer_flint_unram>prime_pow_
+
     ret = []
     cdef Integer digit
     for i from 0 <= i <= fmpz_poly_degree(a):
@@ -539,14 +550,71 @@ cdef int cconv(celement out, x, long prec, long valshift, PowComputer_class prim
     INPUT:
 
     - ``out`` -- an ``celement`` to store the output.
+
     - ``x`` -- a Sage element that can be converted to a `p`-adic element.
+
     - ``prec`` -- a long, giving the precision desired: absolute if
-                  `valshift = 0`, relative if `valshift > 0`.
+                  `valshift = 0`, relative if `valshift != 0`.
+
     - ``valshift`` -- the power of the uniformizer to divide by before
       storing the result in ``out``.
+
     - ``prime_pow`` -- a PowComputer for the ring.
     """
-    raise NotImplementedError
+    if PyList_Check(x):
+        if len(x) > prime_pow.deg:
+            raise ValueError
+        for i from 0 <= i < prime_pow.deg:
+            fmpz_poly_set_mpz(out, x[i], i)
+        creduce(out, out, prec, prime_pow)
+    else:
+        cconv_shared(prime_pow.temp_m, x, prec, valshift, prime_pow)
+        fmpz_poly_set_mpz(out, prime_pow.temp_m)
+
+cdef inline long cconv_mpq_t(celement out, celement x, long prec, bint absolute, PowComputer_class prime_pow) except? -10000:
+    """
+    A fast pathway for conversion of rationals that doesn't require
+    precomputation of the valuation.
+
+    INPUT:
+
+    - ``out`` -- an ``celement`` to store the output.
+    - ``x`` -- an ``mpq_t`` giving the integer to be converted.
+    - ``prec`` -- a long, giving the precision desired: absolute or
+      relative depending on the ``absolute`` input.
+    - ``absolute`` -- if False then extracts the valuation and returns
+                      it, storing the unit in ``out``; if True then
+                      just reduces ``x`` modulo the precision.
+    - ``prime_pow`` -- a PowComputer for the ring.
+
+    OUTPUT:
+
+    - If ``absolute`` is False then returns the valuation that was
+      extracted (``maxordp`` when `x = 0`).
+    """
+    cconv_mpq_t_shared(prime_pow.temp_m, x, prec, absolute, prime_pow)
+    fmpz_poly_set_mpz(out, prime_pow.temp_m)
+
+cdef inline int cconv_mpq_t_out(mpq_t out, celement x, long valshift, long prec, PowComputer_class prime_pow) except -1:
+    """
+    Converts the underlying `p`-adic element into a rational
+
+    - ``out`` -- gives a rational approximating the input.  Currently uses rational reconstruction but
+                 may change in the future to use a more naive method
+    - ``x`` -- an ``celement`` giving the underlying `p`-adic element
+    - ``valshift`` -- a long giving the power of `p` to shift `x` by
+    -` ``prec`` -- a long, the precision of ``x``, used in rational reconstruction
+    - ``prime_pow`` -- a PowComputer for the ring
+    """
+    cdef long degree = fmpz_poly_degree(x)
+    if degree > 0:
+        raise ValueError
+    elif degree == -1:
+        mpz_set_ui(prime_pow.temp_m, 0)
+    else:
+        fmpz_poly_get_coeff_mpz(prime_pow.temp_m, x, 0)
+
+    cconv_mpq_t_out_shared(out, prime_pow.temp_m, valshift, prec, prime_pow)
 
 cdef inline long cconv_mpz_t(celement out, mpz_t x, long prec, bint absolute, PowComputer_class prime_pow) except -2:
     """
@@ -569,13 +637,8 @@ cdef inline long cconv_mpz_t(celement out, mpz_t x, long prec, bint absolute, Po
     - If ``absolute`` is False then returns the valuation that was
       extracted (``maxordp`` when `x = 0`).
     """
-    fmpz_poly_set_mpz(out, x)
-    if absolute:
-        creduce(out, out, prec, prime_pow)
-    elif mpz_sgn(x) == 0:
-        return maxordp
-    else:
-        return cremove(out, out, prec, prime_pow)
+    cconv_mpz_t_shared(prime_pow.temp_m, x, prec, absolute, prime_pow)
+    fmpz_poly_set_mpz(out, prime_pow.temp_m)
 
 cdef inline int cconv_mpz_t_out(mpz_t out, celement x, long valshift, long prec, PowComputer_class prime_pow) except -1:
     """
@@ -583,48 +646,18 @@ cdef inline int cconv_mpz_t_out(mpz_t out, celement x, long valshift, long prec,
     possible.
 
     - ``out`` -- stores the resulting integer as an integer between 0
-                 and `p^{prec + valshift}`.
+      and `p^{prec + valshift}`.
     - ``x`` -- an ``celement`` giving the underlying `p`-adic element.
     - ``valshift`` -- a long giving the power of `p` to shift `x` by.
     -` ``prec`` -- a long, the precision of ``x``: currently not used.
     - ``prime_pow`` -- a PowComputer for the ring.
     """
-    raise NotImplementedError
+    cdef long degree = fmpz_poly_degree(x)
+    if degree > 0:
+        raise ValueError
+    elif degree == -1:
+        mpz_set_ui(prime_pow.temp_m, 0)
+    else:
+        fmpz_poly_get_coeff_mpz(prime_pow.temp_m, x, 0)
 
-cdef inline long cconv_mpq_t(celement out, mpq_t x, long prec, bint absolute, PowComputer_class prime_pow) except? -10000:
-    """
-    A fast pathway for conversion of rationals that doesn't require
-    precomputation of the valuation.
-
-    INPUT:
-
-    - ``out`` -- an ``celement`` to store the output.
-    - ``x`` -- an ``mpq_t`` giving the rational to be converted.
-    - ``prec`` -- a long, giving the precision desired: absolute or
-                  relative depending on the ``absolute`` input.
-    - ``absolute`` -- if False then extracts the valuation and returns
-                      it, storing the unit in ``out``; if True then
-                      just reduces ``x`` modulo the precision.
-    - ``prime_pow`` -- a PowComputer for the ring.
-
-    OUTPUT:
-
-    - If ``absolute`` is False then returns the valuation that was
-      extracted (``maxordp`` when `x = 0`).
-    """
-    raise NotImplementedError
-
-cdef inline int cconv_mpq_t_out(mpq_t out, celement x, long valshift, long prec, PowComputer_class prime_pow) except -1:
-    """
-    Converts the underlying `p`-adic element into a rational.
-
-    - ``out`` -- gives a rational approximating the input.  Currently
-                 uses rational reconstruction but may change in the
-                 future to use a more naive method.
-    - ``x`` -- an ``celement`` giving the underlying `p`-adic element.
-    - ``valshift`` -- a long giving the power of `p` to shift `x` by.
-    -` ``prec`` -- a long, the precision of ``x``, used in rational
-                   reconstruction.
-    - ``prime_pow`` -- a PowComputer for the ring.
-    """
-    raise NotImplementedError
+    cconv_mpz_t_out_shared(out, prime_pow.temp_m, valshift, prec, prime_pow)
