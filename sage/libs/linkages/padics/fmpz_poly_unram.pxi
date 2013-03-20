@@ -6,6 +6,7 @@ include "../../../ext/stdsage.pxi"
 include "../../../ext/interrupt.pxi"
 
 include "../../flint/fmpz_poly.pxi"
+include "../../flint/fmpz_mod_poly.pxi"
 
 from sage.rings.padics.pow_computer_flint cimport PowComputer_flint_unram
 
@@ -36,7 +37,7 @@ cdef inline int cdestruct(celement value, PowComputer_class prime_pow) except -1
     """
     fmpz_poly_clear(value)
 
-cdef inline int ccmp(celement a, celement b, long prec, bint reduce_a, bint reduce_b, PowComputer_class prime_pow) except -2:
+cdef inline int ccmp(celement a, celement b, long prec, bint reduce_a, bint reduce_b, PowComputer_class prime_pow_) except -2:
     """
     Comparison of two elements.
 
@@ -57,7 +58,25 @@ cdef inline int ccmp(celement a, celement b, long prec, bint reduce_a, bint redu
     - If at least one needs to be reduced, returns
       0 (if ``a == b mod p^prec``) or 1 (otherwise)
     """
-    raise NotImplementedError
+    cdef PowComputer_flint_unram prime_pow = <PowComputer_flint_unram>prime_pow_
+    cdef long cmp
+
+    if reduce_a or reduce_b:
+        csub(prime_pow.tmp_poly, a, b, prec, prime_pow)
+        creduce(prime_pow.tmp_poly, prime_pow.tmp_poly, prec, prime_pow)
+        return not ciszero(prime_pow.tmp_poly, prime_pow)
+
+    cdef long da = fmpz_poly_degree(a)
+    cdef long db = fmpz_poly_degree(b)
+    if da < db: return -1
+    elif da > db: return 1
+    for i from 0 <= i <= da:
+        fmpz_poly_get_coeff_fmpz(prime_pow.ftmp, a, i)
+        fmpz_poly_get_coeff_fmpz(prime_pow.ftmp2, b, i)
+        cmp = fmpz_cmp(prime_pow.ftmp, prime_pow.ftmp2)
+        if cmp < 0: return -1
+        elif cmp > 0: return 1
+    return 0
 
 cdef inline int cneg(celement out, celement a, long prec, PowComputer_class prime_pow) except -1:
     """
@@ -90,7 +109,7 @@ cdef inline int cadd(celement out, celement a, celement b, long prec, PowCompute
     """
     fmpz_poly_add(out, a, b)
 
-cdef inline bint creduce(celement out, celement a, long prec, PowComputer_class prime_pow) except -1:
+cdef inline bint creduce(celement out, celement a, long prec, PowComputer_class prime_pow_) except -1:
     """
     Reduce modulo a power of the maximal ideal.
 
@@ -105,8 +124,9 @@ cdef inline bint creduce(celement out, celement a, long prec, PowComputer_class 
 
     - returns True if the reduction is zero; False otherwise.
     """
-
-    fmpz_poly_scalar_mod_fmpz(out, a, (<PowComputer_flint_unram>prime_pow).pow_fmpz_t_tmp(prec)[0])
+    cdef PowComputer_flint_unram prime_pow = <PowComputer_flint_unram>prime_pow_
+    fmpz_poly_divrem(prime_pow.tmp_poly, out, a, prime_pow.get_modulus(prec)[0])
+    fmpz_poly_scalar_mod_fmpz(out, out, prime_pow.pow_fmpz_t_tmp(prec)[0])
     return ciszero(out, prime_pow)
 
 cdef inline bint creduce_small(celement out, celement a, long prec, PowComputer_class prime_pow) except -1:
@@ -269,7 +289,7 @@ cdef inline int csub(celement out, celement a, celement b, long prec, PowCompute
     """
     fmpz_poly_sub(out, a, b)
 
-cdef inline int cinvert(celement out, celement a, long prec, PowComputer_class prime_pow) except -1:
+cdef inline int cinvert(celement out, celement a, long prec, PowComputer_class prime_pow_) except -1:
     """
     Inversion
 
@@ -282,7 +302,14 @@ cdef inline int cinvert(celement out, celement a, long prec, PowComputer_class p
     - ``prec`` -- a long, the precision.
     - ``prime_pow`` -- the PowComputer for the ring.
     """
-    raise NotImplementedError
+    cdef PowComputer_flint_unram prime_pow = <PowComputer_flint_unram>prime_pow_
+
+    _fmpz_poly_set_length(out, prime_pow.deg)
+    cdef fmpz* out_coeffs = (<fmpz_poly_struct*>out)[0].coeffs
+    cdef fmpz* a_coeffs = (<fmpz_poly_struct*>a)[0].coeffs
+    cdef fmpz* modulus_coeffs = (<fmpz_poly_struct*>prime_pow.get_modulus(prec)[0]).coeffs
+    _fmpz_mod_poly_invmod(out_coeffs, a_coeffs, fmpz_poly_degree(a)+1, modulus_coeffs, prime_pow.deg+1, prime_pow.pow_fmpz_t_tmp(prec)[0])
+    _fmpz_poly_normalise(out)
 
 cdef inline int cmul(celement out, celement a, celement b, long prec, PowComputer_class prime_pow) except -1:
     """
@@ -369,7 +396,7 @@ cdef inline bint ciszero(celement a, PowComputer_class prime_pow) except -1:
     """
     return fmpz_poly_is_zero(a)
 
-cdef inline int cpow(celement out, celement a, mpz_t n, long prec, PowComputer_class prime_pow) except -1:
+cdef inline int cpow(celement out, celement a, mpz_t n, long prec, PowComputer_class prime_pow_) except -1:
     """
     Exponentiation.
 
@@ -381,7 +408,22 @@ cdef inline int cpow(celement out, celement a, mpz_t n, long prec, PowComputer_c
     - ``prec`` -- a long, the working absolute precision.
     - ``prime_pow`` -- the PowComputer for the ring.
     """
-    raise NotImplementedError
+    cdef PowComputer_flint_unram prime_pow = <PowComputer_flint_unram>prime_pow_
+
+    if mpz_sgn(n) < 0:
+        raise NotImplementedError("negative exponent")
+    elif mpz_sgn(n) == 0:
+        csetone(out, prime_pow)
+    elif mpz_even_p(n):
+        mpz_divexact_ui(prime_pow.ftmp, n, 2)
+        cpow(out, a, prime_pow.ftmp, prec, prime_pow)
+        fmpz_poly_sqr(out, out)
+    else:
+        mpz_sub_ui(prime_pow.ftmp, n, 1)
+        cpow(out, a, prime_pow.ftmp, prec, prime_pow)
+        fmpz_poly_mul(out, out, a)
+
+    creduce(out, out, prec, prime_pow)
 
 cdef inline int ccopy(celement out, celement a, PowComputer_class prime_pow) except -1:
     """
