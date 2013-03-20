@@ -24,6 +24,8 @@ AUTHORS:
 #*****************************************************************************
 
 include "../../libs/pari/decl.pxi"
+include "../../ext/python_list.pxi"
+include "../../ext/python_tuple.pxi"
 
 import sage.rings.finite_rings.integer_mod
 from sage.libs.pari.gen cimport gen as pari_gen
@@ -106,6 +108,8 @@ cdef class pAdicTemplateElement(pAdicGenericElement):
                   PY_TYPE_CHECK(x, Rational) or \
                   PY_TYPE_CHECK(x, pAdicGenericElement) or \
                   PY_TYPE_CHECK(x, pari_gen) or \
+                  PyList_Check(x) or \
+                  PyTuple_Check(x) or \
                   sage.rings.finite_rings.integer_mod.is_IntegerMod(x)):
             x = Rational(x)
         val = get_ordp(x, self.prime_pow)
