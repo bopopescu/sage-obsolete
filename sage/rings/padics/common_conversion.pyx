@@ -90,8 +90,8 @@ cdef long get_ordp(x, PowComputer_class prime_pow) except? -10000:
                 k += 1
                 n = n / p
         else:
-            x = Integer(x)
-    if PY_TYPE_CHECK(x, Integer):
+            return get_ordp(Integer(x), prime_pow)
+    elif PY_TYPE_CHECK(x, Integer):
         if mpz_sgn((<Integer>x).value) == 0:
             return maxordp
         k = mpz_remove(temp.value, (<Integer>x).value, prime_pow.prime.value)
