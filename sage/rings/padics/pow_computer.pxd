@@ -6,6 +6,7 @@ from sage.rings.integer cimport Integer
 cdef class PowComputer_class(SageObject):
     cdef Integer prime
     cdef bint in_field
+    cdef public object _prec_type
     cdef int __allocated
 
     # the following three should be set by the subclasses

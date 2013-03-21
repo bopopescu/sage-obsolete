@@ -515,7 +515,7 @@ Qp = Qp_class("Qp")
 def Qq(q, prec = DEFAULT_PREC, type = 'capped-rel', modulus = None, names=None,
           print_mode=None, halt = DEFAULT_HALT, ram_name = None, res_name = None, print_pos = None,
        print_sep = None, print_max_ram_terms = None,
-       print_max_unram_terms = None, print_max_terse_terms = None, check = True, implementation = 'NTL'):
+       print_max_unram_terms = None, print_max_terse_terms = None, check = True, implementation = 'FLINT'):
     """
     Given a prime power `q = p^n`, return the unique unramified
     extension of `\mathbb{Q}_p` of degree `n`.
@@ -1009,7 +1009,7 @@ def QpCR(p, prec = DEFAULT_PREC, print_mode = None, halt = DEFAULT_HALT, names =
 def QqCR(q, prec = DEFAULT_PREC, modulus = None, names=None,
           print_mode=None, halt = DEFAULT_HALT, ram_name = None, print_pos = None,
        print_sep = None, print_alphabet = None, print_max_ram_terms = None,
-       print_max_unram_terms = None, print_max_terse_terms = None, check = True, implementation = 'NTL'):
+       print_max_unram_terms = None, print_max_terse_terms = None, check = True, implementation = 'FLINT'):
     """
     A shortcut function to create capped relative unramified `p`-adic
     fields.
@@ -1466,7 +1466,7 @@ Zp = Zp_class("Zp")
 def Zq(q, prec = DEFAULT_PREC, type = 'capped-abs', modulus = None, names=None,
           print_mode=None, halt = DEFAULT_HALT, ram_name = None, res_name = None, print_pos = None,
        print_sep = None, print_max_ram_terms = None,
-       print_max_unram_terms = None, print_max_terse_terms = None, check = True, implementation = 'NTL'):
+       print_max_unram_terms = None, print_max_terse_terms = None, check = True, implementation = 'FLINT'):
     """
     Given a prime power `q = p^n`, return the unique unramified
     extension of `\mathbb{Z}_p` of degree `n`.
@@ -2017,7 +2017,7 @@ def ZpFM(p, prec = DEFAULT_PREC, print_mode = None, halt = DEFAULT_HALT, names =
 def ZqCR(q, prec = DEFAULT_PREC, modulus = None, names=None,
           print_mode=None, halt = DEFAULT_HALT, ram_name = None, print_pos = None,
        print_sep = None, print_alphabet = None, print_max_ram_terms = None,
-       print_max_unram_terms = None, print_max_terse_terms = None, check = True, implementation = 'NTL'):
+       print_max_unram_terms = None, print_max_terse_terms = None, check = True, implementation = 'FLINT'):
     """
     A shortcut function to create capped relative unramified `p`-adic rings.
 
@@ -2037,7 +2037,7 @@ def ZqCR(q, prec = DEFAULT_PREC, modulus = None, names=None,
 def ZqCA(q, prec = DEFAULT_PREC, modulus = None, names=None,
           print_mode=None, halt = DEFAULT_HALT, ram_name = None, print_pos = None,
        print_sep = None, print_alphabet = None, print_max_ram_terms = None,
-       print_max_unram_terms = None, print_max_terse_terms = None, check = True, implementation='NTL'):
+       print_max_unram_terms = None, print_max_terse_terms = None, check = True, implementation='FLINT'):
     """
     A shortcut function to create capped absolute unramified `p`-adic rings.
 
@@ -2056,7 +2056,7 @@ def ZqCA(q, prec = DEFAULT_PREC, modulus = None, names=None,
 def ZqFM(q, prec = DEFAULT_PREC, modulus = None, names=None,
           print_mode=None, halt = DEFAULT_HALT, ram_name = None, print_pos = None,
        print_sep = None, print_alphabet = None, print_max_ram_terms = None,
-       print_max_unram_terms = None, print_max_terse_terms = None, check = True, implementation='NTL'):
+       print_max_unram_terms = None, print_max_terse_terms = None, check = True, implementation='FLINT'):
     """
     A shortcut function to create fixed modulus unramified `p`-adic rings.
 
@@ -2109,7 +2109,7 @@ class pAdicExtension_class(UniqueFactory):
         sage: W.precision_cap()
         12
     """
-    def create_key_and_extra_args(self, base, premodulus, prec = None, print_mode = None, halt = None, names = None, var_name = None, res_name = None, unram_name = None, ram_name = None, print_pos = None, print_sep = None, print_alphabet = None, print_max_ram_terms = None, print_max_unram_terms = None, print_max_terse_terms = None, check = True, unram = False, implementation='NTL'):
+    def create_key_and_extra_args(self, base, premodulus, prec = None, print_mode = None, halt = None, names = None, var_name = None, res_name = None, unram_name = None, ram_name = None, print_pos = None, print_sep = None, print_alphabet = None, print_max_ram_terms = None, print_max_unram_terms = None, print_max_terse_terms = None, check = True, unram = False, implementation='FLINT'):
         """
         Creates a key from input parameters for pAdicExtension.
 
@@ -2120,7 +2120,7 @@ class pAdicExtension_class(UniqueFactory):
             sage: R = Zp(5,3)
             sage: S.<x> = ZZ[]
             sage: pAdicExtension.create_key_and_extra_args(R, x^4-15,names='w')
-            (('e', 5-adic Ring with capped relative precision 3, x^4 - 15, (1 + O(5^3))*x^4 + (O(5^4))*x^3 + (O(5^4))*x^2 + (O(5^4))*x + (2*5 + 4*5^2 + 4*5^3 + O(5^4)), ('w', None, None, 'w'), 12, None, 'series', True, '|', (), -1, -1, -1), {'shift_seed': (3 + O(5^3))})
+            (('e', 5-adic Ring with capped relative precision 3, x^4 - 15, (1 + O(5^3))*x^4 + (O(5^4))*x^3 + (O(5^4))*x^2 + (O(5^4))*x + (2*5 + 4*5^2 + 4*5^3 + O(5^4)), ('w', None, None, 'w'), 12, None, 'series', True, '|', (), -1, -1, -1, 'NTL'), {'shift_seed': (3 + O(5^3))})
         """
         if print_mode is None:
             print_mode = base.print_mode()
@@ -2274,7 +2274,7 @@ class pAdicExtension_class(UniqueFactory):
 
             sage: R = Zp(5,3)
             sage: S.<x> = R[]
-            sage: pAdicExtension.create_object(version = (3,4,2), key = ('e', R, x^4 - 15, x^4 - 15, ('w', None, None, 'w'), 12, None, 'series', True, '|', (),-1,-1,-1), shift_seed = S(3 + O(5^3)))
+            sage: pAdicExtension.create_object(version = (3,4,2), key = ('e', R, x^4 - 15, x^4 - 15, ('w', None, None, 'w'), 12, None, 'series', True, '|', (),-1,-1,-1,'NTL'), shift_seed = S(3 + O(5^3)))
             Eisenstein Extension of 5-adic Ring with capped relative precision 3 in w defined by (1 + O(5^3))*x^4 + (2*5 + 4*5^2 + 4*5^3 + O(5^4))
         """
         polytype = key[0]

@@ -52,6 +52,7 @@ cdef class PowComputer_class(SageObject):
             sage: PC.pow_Integer_Integer(2)
             9
         """
+        self._prec_type = None
         sig_on()
         mpz_init(self.temp_m)
         sig_off()
@@ -564,14 +565,14 @@ cdef PowComputer_base PowComputer_c(Integer m, Integer cache_limit, Integer prec
         PC = pow_comp_cache[key]()
         if PC is not None:
             return PC
-    if prec_type == 'CR':
+    if prec_type == 'capped-rel':
         from padic_capped_relative_element import PowComputer_ as PC_class
-    elif prec_type == 'CA':
+    elif prec_type == 'capped-abs':
         from padic_capped_absolute_element import PowComputer_ as PC_class
-    elif prec_type == 'FM':
+    elif prec_type == 'fixed-mod':
         from padic_fixed_mod_element import PowComputer_ as PC_class
     else:
-        raise RuntimeError
+        PC_class = PowComputer_base
     PC = PC_class(m, mpz_get_ui(cache_limit.value), mpz_get_ui(prec_cap.value), mpz_get_ui(prec_cap.value), in_field)
     pow_comp_cache[key] = weakref.ref(PC)
     return PC

@@ -1988,11 +1988,11 @@ cdef class pAdicCoercion_CR_frac_field(RingHomomorphism_coercion):
 
     EXAMPLES::
 
-        sage: R.<a> = Zq(27, implementation='FLINT')
+        sage: R.<a> = ZqCR(27, implementation='FLINT')
         sage: K = R.fraction_field()
         sage: K.coerce_map_from(R)
         Ring Coercion morphism:
-          From: Unramified Extension of 3-adic Ring with capped relative precision 20 in a defined by (1 + O(3^20))*x^3 + (2 + O(3^20))*x + (1 + O(3^20))
+          From: Unramified Extension of 3-adic Ring with capped relative precision 20 in a defined by (1 + O(3^20))*x^3 + (O(3^20))*x^2 + (2 + O(3^20))*x + (1 + O(3^20))
           To:   Unramified Extension of 3-adic Field with capped relative precision 20 in a defined by (1 + O(3^20))*x^3 + (O(3^20))*x^2 + (2 + O(3^20))*x + (1 + O(3^20))
     """
     def __init__(self, R, K):
@@ -2004,7 +2004,7 @@ cdef class pAdicCoercion_CR_frac_field(RingHomomorphism_coercion):
             sage: R.<a> = ZqCR(27, implementation='FLINT')
             sage: K = R.fraction_field()
             sage: f = K.coerce_map_from(R); type(f)
-            <type 'sage.rings.padics.qadic_flint_CA.pAdicCoercion_CR_frac_field'>
+            <type 'sage.rings.padics.qadic_flint_CR.pAdicCoercion_CR_frac_field'>
         """
         RingHomomorphism_coercion.__init__(self, R.Hom(K), check=False)
         self._zero = K(0)
@@ -2060,7 +2060,7 @@ cdef class pAdicCoercion_CR_frac_field(RingHomomorphism_coercion):
             sage: f(b, absprec=1)
             O(3)
             sage: f(R(0))
-            O(3^20)
+            0
         """
         cdef long aprec, rprec
         cdef CRElement x = _x
@@ -2110,7 +2110,7 @@ cdef class pAdicConvert_CR_frac_field(Morphism):
         sage: f = R.convert_map_from(K); f
         Generic morphism:
           From: Unramified Extension of 3-adic Field with capped relative precision 20 in a defined by (1 + O(3^20))*x^3 + (O(3^20))*x^2 + (2 + O(3^20))*x + (1 + O(3^20))
-          To:   Unramified Extension of 3-adic Ring with capped relative precision 20 in a defined by (1 + O(3^20))*x^3 + (2 + O(3^20))*x + (1 + O(3^20))
+          To:   Unramified Extension of 3-adic Ring with capped relative precision 20 in a defined by (1 + O(3^20))*x^3 + (O(3^20))*x^2 + (2 + O(3^20))*x + (1 + O(3^20))
     """
     def __init__(self, K, R):
         """
@@ -2121,7 +2121,7 @@ cdef class pAdicConvert_CR_frac_field(Morphism):
             sage: R.<a> = ZqCR(27, implementation='FLINT')
             sage: K = R.fraction_field()
             sage: f = R.convert_map_from(K); type(f)
-            <type 'sage.rings.padics.qadic_flint_CA.pAdicConvert_CR_frac_field'>
+            <type 'sage.rings.padics.qadic_flint_CR.pAdicConvert_CR_frac_field'>
         """
         Morphism.__init__(self, Hom(K, R, SetsWithPartialMaps()))
         self._zero = R(0)
@@ -2175,7 +2175,7 @@ cdef class pAdicConvert_CR_frac_field(Morphism):
             sage: f(b, absprec=1)
             O(3)
             sage: f(K(0))
-            O(3^20)
+            0
         """
         cdef long aprec, rprec
         cdef CRElement x = _x
