@@ -13,19 +13,19 @@ cdef class PowComputer_flint(PowComputer_class):
 
     EXAMPLES::
 
-        sage: from sage.rings.padics.pow_computer_flint import PowComputer_flint_maker
-        sage: A = PowComputer_flint_maker(5, 20, 20, 20, False); A
+        sage: from sage.rings.padics.pow_computer_flint import PowComputer_flint
+        sage: PowComputer_flint(5, 20, 20, 20, False)
         FLINT PowComputer for 5
     """
-    def __cinit__(self, Integer prime, long cache_limit, long prec_cap, long ram_prec_cap, bint in_field, poly=None):
+    def __cinit__(self, Integer prime, long cache_limit, long prec_cap, long ram_prec_cap, bint in_field, poly=None, shift_seed = None):
         """
         Memory initialization.
 
         TESTS::
 
-            sage: from sage.rings.padics.pow_computer_flint import PowComputer_flint_maker
-            sage: A = PowComputer_flint_maker(5, 20, 20, 20, False)
-            sage: TestSuite(A).run()
+            sage: from sage.rings.padics.pow_computer_flint import PowComputer_flint
+            sage: type(PowComputer_flint(5, 20, 20, 20, False))
+            <type 'sage.rings.padics.pow_computer_flint.PowComputer_flint'>
 
         """
         # fmpz_init does not allocate memory
@@ -52,7 +52,8 @@ cdef class PowComputer_flint(PowComputer_class):
         TESTS::
 
             sage: from sage.rings.padics.pow_computer_flint import PowComputer_flint_maker
-            sage: A = PowComputer_flint_maker(5, 20, 20, 20, False)
+            sage: R.<x> = ZZ[]; f = x^3 - 8*x - 2
+            sage: A = PowComputer_flint_maker(5, 20, 20, 20, False, f, 'capped-rel') # indirect doctest
             sage: TestSuite(A).run()
 
         """
@@ -66,8 +67,8 @@ cdef class PowComputer_flint(PowComputer_class):
 
         TESTS::
 
-            sage: from sage.rings.padics.pow_computer_flint import PowComputer_flint_maker
-            sage: A = PowComputer_flint_maker(5, 20, 20, 20, False)
+            sage: from sage.rings.padics.pow_computer_flint import PowComputer_flint
+            sage: A = PowComputer_flint(5, 20, 20, 20, False)
             sage: del A
         """
         if self.__allocated >= 4:
@@ -84,10 +85,12 @@ cdef class PowComputer_flint(PowComputer_class):
         TESTS::
 
             sage: from sage.rings.padics.pow_computer_flint import PowComputer_flint_maker
-            sage: A = PowComputer_flint_maker(5, 20, 20, 20, False);
+            sage: R.<x> = ZZ[]; f = x^3 - 8*x - 2
+            sage: A = PowComputer_flint_maker(5, 20, 20, 20, False, f, 'capped-rel') # indirect doctest
             sage: A._test_pickling() # indirect doctest
+
         """
-        return PowComputer_flint_maker, (self.prime, self.cache_limit, self.prec_cap, self.ram_prec_cap, self.in_field, self.polynomial())
+        return PowComputer_flint_maker, (self.prime, self.cache_limit, self.prec_cap, self.ram_prec_cap, self.in_field, self.polynomial(), self._prec_type)
 
     def _repr_(self):
         """
@@ -95,8 +98,8 @@ cdef class PowComputer_flint(PowComputer_class):
 
         EXAMPLES::
 
-            sage: from sage.rings.padics.pow_computer_flint import PowComputer_flint_maker
-            sage: A = PowComputer_flint_maker(5, 20, 20, 20, False); A
+            sage: from sage.rings.padics.pow_computer_flint import PowComputer_flint
+            sage: A = PowComputer_flint(5, 20, 20, 20, False); A
             FLINT PowComputer for 5
         """
         return "FLINT PowComputer for %s"%(self.prime)
@@ -154,10 +157,11 @@ cdef class PowComputer_flint(PowComputer_class):
 
         EXAMPLES::
 
-            sage: from sage.rings.padics.pow_computer_flint import PowComputer_flint_maker
-            sage: A = PowComputer_flint_maker(5, 20, 20, 20, False, None)
+            sage: from sage.rings.padics.pow_computer_flint import PowComputer_flint
+            sage: A = PowComputer_flint(5, 20, 20, 20, False, None)
             sage: A.polynomial() is None
             True
+
         """
         return None
 
@@ -169,10 +173,11 @@ cdef class PowComputer_flint_1step(PowComputer_flint):
 
     EXAMPLES::
 
-        sage: from sage.rings.padics.pow_computer_flint import PowComputer_flint_maker
+        sage: from sage.rings.padics.pow_computer_flint import PowComputer_flint_1step
         sage: R.<x> = ZZ[]; f = x^3 - 8*x - 2
-        sage: A = PowComputer_flint_maker(5, 20, 20, 20, False, f); A
+        sage: A = PowComputer_flint_1step(5, 20, 20, 20, False, f); A
         FLINT PowComputer for 5 with polynomial x^3 - 8*x - 2
+
     """
     def __cinit__(self, Integer prime, long cache_limit, long prec_cap, long ram_prec_cap, bint in_field, _poly):
         """
@@ -180,10 +185,12 @@ cdef class PowComputer_flint_1step(PowComputer_flint):
 
         TESTS::
 
-            sage: from sage.rings.padics.pow_computer_flint import PowComputer_flint_maker
+            sage: from sage.rings.padics.pow_computer_flint import PowComputer_flint_1step
             sage: R.<x> = ZZ[]; f = x^3 - 8*x - 2
-            sage: A = PowComputer_flint_maker(5, 20, 20, 20, False, f)
-            sage: TestSuite(A).run()
+            sage: A = PowComputer_flint_1step(5, 20, 20, 20, False, f)
+            sage: type(A)
+            <type 'sage.rings.padics.pow_computer_flint.PowComputer_flint_1step'>
+
         """
         cdef Polynomial_integer_dense_flint poly = _poly
         cdef long length = fmpz_poly_length(poly.__poly)
@@ -227,8 +234,9 @@ cdef class PowComputer_flint_1step(PowComputer_flint):
 
             sage: from sage.rings.padics.pow_computer_flint import PowComputer_flint_maker
             sage: R.<x> = ZZ[]; f = x^3 - 8*x - 2
-            sage: A = PowComputer_flint_maker(5, 20, 20, 20, False, f)
+            sage: A = PowComputer_flint_maker(5, 20, 20, 20, False, f, 'capped-rel')
             sage: TestSuite(A).run()
+
         """
         PowComputer_flint.__init__(self, prime, cache_limit, prec_cap, ram_prec_cap, in_field, _poly, shift_seed)
 
@@ -254,9 +262,9 @@ cdef class PowComputer_flint_1step(PowComputer_flint):
 
         TESTS::
 
-            sage: from sage.rings.padics.pow_computer_flint import PowComputer_flint_maker
+            sage: from sage.rings.padics.pow_computer_flint import PowComputer_flint_1step
             sage: R.<x> = ZZ[]; f = x^3 - 8*x - 2
-            sage: A = PowComputer_flint_maker(5, 20, 20, 20, False, f)
+            sage: A = PowComputer_flint_1step(5, 20, 20, 20, False, f)
             sage: del A
         """
         cdef Py_ssize_t i
@@ -274,9 +282,9 @@ cdef class PowComputer_flint_1step(PowComputer_flint):
 
         EXAMPLES::
 
-            sage: from sage.rings.padics.pow_computer_flint import PowComputer_flint_maker
+            sage: from sage.rings.padics.pow_computer_flint import PowComputer_flint_1step
             sage: R.<x> = ZZ[]; f = x^3 - 8*x - 2
-            sage: A = PowComputer_flint_maker(5, 20, 20, 20, False, f); A
+            sage: A = PowComputer_flint_1step(5, 20, 20, 20, False, f); A
             FLINT PowComputer for 5 with polynomial x^3 - 8*x - 2
         """
         return "FLINT PowComputer for %s with polynomial %s"%(self.prime, self.polynomial())
@@ -289,10 +297,10 @@ cdef class PowComputer_flint_1step(PowComputer_flint):
 
         EXAMPLES::
 
-            sage: from sage.rings.padics.pow_computer_flint import PowComputer_flint_maker
+            sage: from sage.rings.padics.pow_computer_flint import PowComputer_flint_1step
             sage: R.<x> = ZZ[]; f = x^3 - 8*x - 2; g = x^3 - (8 + 5^22)*x - 2
-            sage: A = PowComputer_flint_maker(5, 20, 20, 20, False, f)
-            sage: B = PowComputer_flint_maker(5, 20, 20, 20, False, g)
+            sage: A = PowComputer_flint_1step(5, 20, 20, 20, False, f)
+            sage: B = PowComputer_flint_1step(5, 20, 20, 20, False, g)
             sage: A == B
             False
         """
@@ -349,9 +357,9 @@ cdef class PowComputer_flint_1step(PowComputer_flint):
 
         EXAMPLES::
 
-            sage: from sage.rings.padics.pow_computer_flint import PowComputer_flint_maker
+            sage: from sage.rings.padics.pow_computer_flint import PowComputer_flint_1step
             sage: R.<y> = ZZ[]; f = y^3 - 8*y - 2
-            sage: A = PowComputer_flint_maker(5, 20, 20, 20, False, f)
+            sage: A = PowComputer_flint_1step(5, 20, 20, 20, False, f)
             sage: A.polynomial()
             x^3 - 8*x - 2
             sage: A.polynomial(var='y')
@@ -377,10 +385,11 @@ cdef class PowComputer_flint_unram(PowComputer_flint_1step):
 
     EXAMPLES::
 
-        sage: from sage.rings.padics.pow_computer_flint import PowComputer_flint_maker
+        sage: from sage.rings.padics.pow_computer_flint import PowComputer_flint_unram
         sage: R.<x> = ZZ[]; f = x^3 - 8*x - 2
-        sage: A = PowComputer_flint_maker(5, 20, 20, 20, False, f); A
+        sage: A = PowComputer_flint_unram(5, 20, 20, 20, False, f); A
         FLINT PowComputer for 5 with polynomial x^3 - 8*x - 2
+
     """
     def __cinit__(self, Integer prime, long cache_limit, long prec_cap, long ram_prec_cap, bint in_field, _poly, shift_seed=None):
         """
@@ -388,10 +397,12 @@ cdef class PowComputer_flint_unram(PowComputer_flint_1step):
 
         TESTS::
 
-            sage: from sage.rings.padics.pow_computer_flint import PowComputer_flint_maker
+            sage: from sage.rings.padics.pow_computer_flint import PowComputer_flint_unram
             sage: R.<x> = ZZ[]; f = x^3 - 8*x - 2
-            sage: A = PowComputer_flint_maker(5, 20, 20, 20, False, f)
-            sage: TestSuite(A).run()
+            sage: A = PowComputer_flint_unram(5, 20, 20, 20, False, f)
+            sage: type(A)
+            <type 'sage.rings.padics.pow_computer_flint.PowComputer_flint_unram'>
+
         """
         # fmpz_init does not allocate memory
         fmpz_init(self.fmpz_ccmp)
@@ -455,10 +466,11 @@ cdef class PowComputer_flint_unram(PowComputer_flint_1step):
 
         TESTS::
 
-            sage: from sage.rings.padics.pow_computer_flint import PowComputer_flint_maker
+            sage: from sage.rings.padics.pow_computer_flint import PowComputer_flint_unram
             sage: R.<x> = ZZ[]; f = x^3 - 8*x - 2
-            sage: A = PowComputer_flint_maker(5, 20, 20, 20, False, f)
+            sage: A = PowComputer_flint_unram(5, 20, 20, 20, False, f)
             sage: del A
+
         """
         if self.__allocated >= 16:
             fmpz_clear(self.fmpz_ccmp)
@@ -488,10 +500,9 @@ cdef class PowComputer_flint_unram(PowComputer_flint_1step):
 
             sage: from sage.rings.padics.pow_computer_flint import PowComputer_flint_maker
             sage: R.<x> = ZZ[]; f = x^3 - 8*x - 2
-            sage: A = PowComputer_flint_maker(5, 20, 20, 20, False, f)
-            sage: type(A)
-            <type 'sage.rings.padics.pow_computer_flint.PowComputer_flint_unram'>
+            sage: A = PowComputer_flint_maker(5, 20, 20, 20, False, f, 'capped-rel')
             sage: TestSuite(A).run()
+
         """
         PowComputer_flint_1step.__init__(self, prime, cache_limit, prec_cap, ram_prec_cap, in_field, poly)
 
@@ -521,7 +532,9 @@ cdef class PowComputer_flint_eis(PowComputer_flint_1step):
             sage: from sage.rings.padics.pow_computer_flint import PowComputer_flint_eis
             sage: R.<x> = ZZ[]; f = x^3 - 25*x + 5
             sage: A = PowComputer_flint_eis(5, 20, 20, 60, False, f)
-            sage: TestSuite(A).run()
+            sage: type(A)
+            <type 'sage.rings.padics.pow_computer_flint.PowComputer_flint_eis'>
+
         """
         PowComputer_flint_1step.__init__(self, prime, cache_limit, prec_cap, ram_prec_cap, in_field, poly)
 
@@ -529,7 +542,7 @@ cdef class PowComputer_flint_eis(PowComputer_flint_1step):
         self.f = 1
         fmpz_set(self.q, self.fprime)
 
-def PowComputer_flint_maker(prime, cache_limit, prec_cap, ram_prec_cap, in_field, poly=None, prec_type=None):
+def PowComputer_flint_maker(prime, cache_limit, prec_cap, ram_prec_cap, in_field, poly, prec_type):
     """
     Return an appropriate FLINT PowComputer for the given input.
 
@@ -573,8 +586,6 @@ def PowComputer_flint_maker(prime, cache_limit, prec_cap, ram_prec_cap, in_field
 
         sage: from sage.rings.padics.pow_computer_flint import PowComputer_flint_maker
         sage: R.<x> = ZZ[]
-        sage: A = PowComputer_flint_maker(3, 20, 20, 20, False); type(A)
-        <type 'sage.rings.padics.pow_computer_flint.PowComputer_flint'>
         sage: A = PowComputer_flint_maker(3, 20, 20, 20, False, x^3 + 2*x + 1, 'capped-rel'); type(A)
         <type 'sage.rings.padics.qadic_flint_CR.PowComputer_'>
         sage: A = PowComputer_flint_maker(3, 20, 20, 20, False, x^3 + 2*x + 1, 'capped-abs'); type(A)
@@ -583,14 +594,12 @@ def PowComputer_flint_maker(prime, cache_limit, prec_cap, ram_prec_cap, in_field
         <type 'sage.rings.padics.qadic_flint_FM.PowComputer_'>
 
     """
-    if poly is None:
-        PowComputer_ = PowComputer_flint
-    elif prec_type == 'capped-rel':
+    if prec_type == 'capped-rel':
         from qadic_flint_CR import PowComputer_
     elif prec_type == 'capped-abs':
         from qadic_flint_CA import PowComputer_
     elif prec_type == 'fixed-mod':
         from qadic_flint_FM import PowComputer_
     else:
-        raise RuntimeError
+        raise ValueError("unknown prec_type `%s`"%prec_type)
     return PowComputer_(prime, cache_limit, prec_cap, ram_prec_cap, in_field, poly)
