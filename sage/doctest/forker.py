@@ -78,6 +78,8 @@ def init_sage():
     import sage.misc.displayhook
     sys.displayhook = sage.misc.displayhook.DisplayHook(sys.displayhook)
 
+    import readline
+
     # Workarounds for https://github.com/sagemath/sagenb/pull/84
     import sagenb.notebook.misc
     import sagenb.notebook.sage_email
